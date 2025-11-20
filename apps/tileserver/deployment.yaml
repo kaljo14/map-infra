@@ -1,0 +1,86 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tileserver
+  namespace: default
+  labels:
+    app: tileserver
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tileserver
+  template:
+    metadata:
+      labels:
+        app: tileserver
+    spec:
+      containers:
+      # Envoy Sidecar (Exposed)
+      - name: envoy
+        image: envoyproxy/envoy:v1.29-latest
+        ports:
+        - name: http
+          containerPort: 8000  # Exposed port
+          protocol: TCP
+        volumeMounts:
+        - name: envoy-config
+          mountPath: /etc/envoy
+          readOnly: true
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi
+      
+      # Tileserver Application (Hidden)
+      - name: tileserver
+        image: maptiler/tileserver-gl:latest
+        args: ["-p", "8080"]  # Listen on port 8080
+        ports:
+        - name: app-port
+          containerPort: 8080
+          protocol: TCP
+        # Only bind to localhost to ensure no external access bypasses Envoy
+        # Note: tileserver-gl might not support binding only to localhost easily via args,
+        # but since the Service only targets port 8000, it's effectively hidden.
+        volumeMounts:
+        - name: tiles
+          mountPath: /data
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 1Gi
+      
+      volumes:
+      - name: envoy-config
+        configMap:
+          name: tileserver-envoy-config
+          items:
+          - key: envoy.yaml
+            path: envoy.yaml
+      - name: tiles
+        persistentVolumeClaim:
+          claimName: tiles-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tileserver
+  namespace: default
+  labels:
+    app: tileserver
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 8000  # Points to Envoy
+    protocol: TCP
+    name: http
+  selector:
+    app: tileserver

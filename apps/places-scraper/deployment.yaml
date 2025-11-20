@@ -1,0 +1,97 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: places-scraper
+  namespace: map
+  labels:
+    app: places-scraper
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: places-scraper
+  template:
+    metadata:
+      labels:
+        app: places-scraper
+    spec:
+      containers:
+      # Envoy Sidecar (Exposed)
+      - name: envoy
+        image: envoyproxy/envoy:v1.29-latest
+        ports:
+        - name: http
+          containerPort: 8000  # Exposed port
+          protocol: TCP
+        volumeMounts:
+        - name: envoy-config
+          mountPath: /etc/envoy
+          readOnly: true
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi
+      - name: places-scraper
+        image: kaljo14/places-scraperlatest
+        ports:
+        - name: app-port
+          containerPort: 3000
+          protocol: TCP
+        env:
+        - name: PORT
+          value: "3000"
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: places-scraper-secret
+              key: POSTGRES_USER
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: places-scraper-secret
+              key: POSTGRES_PASSWORD
+        - name: POSTGRES_DB
+          valueFrom:
+            secretKeyRef:
+              name: places-scraper-secret
+              key: POSTGRES_DB
+        - name: POSTGRES_CONN_STRING
+          valueFrom:
+            secretKeyRef:
+              name: places-scraper-secret
+              key: POSTGRES_CONN_STRING
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 1Gi
+      
+      volumes:
+      - name: envoy-config
+        configMap:
+          name: scraper-envoy-config
+          items:
+          - key: envoy.yaml
+            path: envoy.yaml
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: places-scraper
+  namespace: map
+  labels:
+    app: places-scraper
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 8000  # Points to Envoy
+    protocol: TCP
+    name: http
+  selector:
+    app: places-scraper

@@ -1,0 +1,33 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: map
+
+resources:
+# Practical Apps
+- apps/tileserver/deployment.yaml
+- apps/tileserver/ingress.yaml
+- apps/tileserver/storage.yaml
+- apps/tileserver/job.yaml
+- apps/places-scraper/deployment.yaml
+- apps/places-scraper/ingress.yaml
+- apps/frontend/deployment.yaml
+- apps/frontend/ingress.yaml
+
+# Generate ConfigMaps for each app
+configMapGenerator:
+- name: tileserver-envoy-config
+  files:
+  - envoy.yaml=apps/tileserver/envoy-config.yaml
+- name: scraper-envoy-config
+  files:
+  - envoy.yaml=apps/places-scraper/envoy-config.yaml
+
+labels:
+- pairs:
+    managed-by: kustomize
+    env: production
+
+images:
+- name: envoyproxy/envoy
+  newTag: v1.29-latest

@@ -1,0 +1,20 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: grid-tile-generator
+  namespace: default
+spec:
+  template:
+    spec:
+      containers:
+      - name: generator
+        image: kaljo14/grid-tile-generator:latest
+        volumeMounts:
+        - name: tiles
+          mountPath: /data
+      restartPolicy: Never
+      volumes:
+      - name: tiles
+        persistentVolumeClaim:
+          claimName: tiles-pvc
+  backoffLimit: 2
