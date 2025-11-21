@@ -2,7 +2,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: tileserver
-  namespace: default
   labels:
     app: tileserver
 spec:

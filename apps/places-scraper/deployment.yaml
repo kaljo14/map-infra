@@ -35,14 +35,14 @@ spec:
             cpu: 200m
             memory: 256Mi
       - name: places-scraper
-        image: kaljo14/places-scraperlatest
+        image: kaljo14/places-scraper:latest
         ports:
         - name: app-port
-          containerPort: 3000
+          containerPort: 8080
           protocol: TCP
         env:
         - name: PORT
-          value: "3000"
+          value: "8080"
         - name: POSTGRES_USER
           valueFrom:
             secretKeyRef:
@@ -63,6 +63,11 @@ spec:
             secretKeyRef:
               name: places-scraper-secret
               key: POSTGRES_CONN_STRING
+        - name: GOOGLE_PLACES_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: scraper-gg-secret
+              key: GOOGLE_PLACES_API_KEY
         resources:
           requests:
             cpu: 100m
@@ -70,7 +75,7 @@ spec:
           limits:
             cpu: 500m
             memory: 1Gi
-      
+
       volumes:
       - name: envoy-config
         configMap:
@@ -94,4 +99,4 @@ spec:
     protocol: TCP
     name: http
   selector:
-    app: places-scraper
+    app: places-scraper                              
