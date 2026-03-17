@@ -16,7 +16,16 @@ spec:
     spec:
       containers:
       - name: frontend
-        image: kaljo14/my-map:latest
+        image: kaljo14/my-map@sha256:22ec4b116b2d0cde82f56347cfa0c3b9bfb853972a952cdbb5d1063f49f59cf5
+        env:
+        - name: ENABLE_AUTH
+          value: "true"
+        - name: PLACES_API_URL
+          value: "https://places-scraper.mustaci.com/"
+        - name: TILES_API_URL
+          value: "https://tiles.mustaci.com/"
+        - name: KEYCLOAK_URL
+          value: "https://keycloak.mustaci.com"
         ports:
         - name: http
           containerPort: 80 # Adjust if your app listens on 3000 or 8080

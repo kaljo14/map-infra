@@ -1,18 +1,19 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: tileserver
+  name: places-scraper
+  namespace: map
   labels:
-    app: tileserver
+    app: places-scraper
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: tileserver
+      app: places-scraper
   template:
     metadata:
       labels:
-        app: tileserver
+        app: places-scraper
     spec:
       containers:
       # Envoy Sidecar (Exposed)
@@ -33,21 +34,40 @@ spec:
           limits:
             cpu: 200m
             memory: 256Mi
-      
-      # Tileserver Application (Hidden)
-      - name: tileserver
-        image: maptiler/tileserver-gl:latest
-        args: ["-p", "8080"]  # Listen on port 8080
+      - name: places-scraper
+        image: kaljo14/places-scraper:latest
         ports:
         - name: app-port
           containerPort: 8080
           protocol: TCP
-        # Only bind to localhost to ensure no external access bypasses Envoy
-        # Note: tileserver-gl might not support binding only to localhost easily via args,
-        # but since the Service only targets port 8000, it's effectively hidden.
-        volumeMounts:
-        - name: tiles
-          mountPath: /data
+        env:
+        - name: PORT
+          value: "8080"
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: places-scraper-secret
+              key: POSTGRES_USER
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: places-scraper-secret
+              key: POSTGRES_PASSWORD
+        - name: POSTGRES_DB
+          valueFrom:
+            secretKeyRef:
+              name: places-scraper-secret
+              key: POSTGRES_DB
+        - name: POSTGRES_CONN_STRING
+          valueFrom:
+            secretKeyRef:
+              name: places-scraper-secret
+              key: POSTGRES_CONN_STRING
+        - name: GOOGLE_PLACES_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: scraper-gg-secret
+              key: GOOGLE_PLACES_API_KEY
         resources:
           requests:
             cpu: 100m
@@ -55,24 +75,22 @@ spec:
           limits:
             cpu: 500m
             memory: 1Gi
-      
+
       volumes:
       - name: envoy-config
         configMap:
-          name: tileserver-envoy-config
+          name: scraper-envoy-config
           items:
           - key: envoy.yaml
             path: envoy.yaml
-      - name: tiles
-        persistentVolumeClaim:
-          claimName: tiles-pvc
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: tileserver
+  name: places-scraper
+  namespace: map
   labels:
-    app: tileserver
+    app: places-scraper
 spec:
   type: ClusterIP
   ports:
@@ -81,4 +99,4 @@ spec:
     protocol: TCP
     name: http
   selector:
-    app: tileserver
+    app: places-scraper                              

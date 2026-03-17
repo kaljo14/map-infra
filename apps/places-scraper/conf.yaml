@@ -55,12 +55,12 @@ data:
                   "@type": type.googleapis.com/envoy.extensions.filters.http.jwt_authn.v3.JwtAuthentication
                   providers:
                     keycloak:
-                      issuer: "https://keycloack.mustaci.com/realms/barbershop-realm"
+                      issuer: "https://keycloak.mustaci.com/realms/barbershop-realm"
                       audiences:
                       - "barbershop-app"
                       remote_jwks:
                         http_uri:
-                          uri: "http://keycloak.default.svc.cluster.local/realms/barbershop-realm/protocol/openid-connect/certs"
+                          uri: "http://keycloak.databse.svc.cluster.local/realms/barbershop-realm/protocol/openid-connect/certs"
                           cluster: keycloak_cluster
                           timeout: 5s
                         cache_duration:
@@ -181,5 +181,6 @@ data:
             - endpoint:
                 address:
                   socket_address:
-                    address: keycloak.default.svc.cluster.local
+                    address: keycloak.database.svc.cluster.local
                     port_value: 80
+

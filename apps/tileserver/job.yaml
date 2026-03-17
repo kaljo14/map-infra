@@ -2,7 +2,6 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: grid-tile-generator
-  namespace: default
 spec:
   template:
     spec:

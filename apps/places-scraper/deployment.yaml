@@ -35,7 +35,7 @@ spec:
             cpu: 200m
             memory: 256Mi
       - name: places-scraper
-        image: kaljo14/places-scraperlatest
+        image: kaljo14/places-scraper:latest
         ports:
         - name: app-port
           containerPort: 3000
@@ -63,6 +63,11 @@ spec:
             secretKeyRef:
               name: places-scraper-secret
               key: POSTGRES_CONN_STRING
+        - name: GOOGLE_PLACES_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: scraper-gg-secret
+              key: GOOGLE_PLACES_API_KEY
         resources:
           requests:
             cpu: 100m
