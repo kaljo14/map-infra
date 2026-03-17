@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: frontend
-        image: kaljo14/my-map@sha256:22ec4b116b2d0cde82f56347cfa0c3b9bfb853972a952cdbb5d1063f49f59cf5
+        image: kaljo14/my-map@sha256:f60ce3dea202354aa508707c70bf38656de49e5d06318a2850a2952baa4610cc
         env:
         - name: ENABLE_AUTH
           value: "true"
@@ -42,7 +42,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: frontend
-  namespace: default
+  namespace: map
   labels:
     app: frontend
 spec:

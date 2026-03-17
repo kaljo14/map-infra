@@ -38,11 +38,11 @@ spec:
         image: kaljo14/places-scraper:latest
         ports:
         - name: app-port
-          containerPort: 3000
+          containerPort: 8080
           protocol: TCP
         env:
         - name: PORT
-          value: "3000"
+          value: "8080"
         - name: POSTGRES_USER
           valueFrom:
             secretKeyRef:

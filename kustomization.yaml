@@ -9,6 +9,7 @@ resources:
 - apps/tileserver/ingress.yaml
 - apps/tileserver/storage.yaml
 - apps/tileserver/job.yaml
+- apps/tileserver/config-tileserver-conf.yaml
 - apps/places-scraper/deployment.yaml
 - apps/places-scraper/ingress.yaml
 - apps/frontend/deployment.yaml

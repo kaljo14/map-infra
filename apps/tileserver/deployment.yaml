@@ -37,7 +37,7 @@ spec:
       # Tileserver Application (Hidden)
       - name: tileserver
         image: maptiler/tileserver-gl:latest
-        args: ["-p", "8080"]  # Listen on port 8080
+        args: ["-p", "8080", "--config", "/config/config.json"]
         ports:
         - name: app-port
           containerPort: 8080
@@ -48,6 +48,9 @@ spec:
         volumeMounts:
         - name: tiles
           mountPath: /data
+        - name: tileserver-config
+          mountPath: /config
+          readOnly: true
         resources:
           requests:
             cpu: 100m
@@ -63,6 +66,12 @@ spec:
           items:
           - key: envoy.yaml
             path: envoy.yaml
+      - name: tileserver-config
+        configMap:
+          name: tileserver-config
+          items:
+          - key: config.json
+            path: config.json
       - name: tiles
         persistentVolumeClaim:
           claimName: tiles-pvc
