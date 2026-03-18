@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: frontend
+  namespace: map
   labels:
     app: frontend
 spec:
@@ -15,33 +16,44 @@ spec:
         app: frontend
     spec:
       containers:
-      - name: frontend
-        image: kaljo14/my-map:latest
-        ports:
-        - name: http
-          containerPort: 80 # Adjust if your app listens on 3000 or 8080
-          protocol: TCP
-        resources:
-          requests:
-            cpu: 100m
-            memory: 128Mi
-          limits:
-            cpu: 500m
-            memory: 512Mi
+        - name: frontend
+          image: kaljo14/my-map@sha256:b3daa2606565dbab7668b529abd72a59b7b301bd08419e828b9b1e99231026b3
+          env:
+            - name: ENABLE_AUTH
+              value: "true"
+            - name: PLACES_API_URL
+              value: "http://places-scraper"
+            - name: TILES_API_URL
+              value: "http://tileserver"
+            - name: KEYCLOAK_URL
+              value: "https://keycloak.mustaci.com"
+            - name: MARTIN_API_URL
+              value: "http://martin"
+          ports:
+            - name: http
+              containerPort: 80 # Adjust if your app listens on 3000 or 8080
+              protocol: TCP
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: frontend
-  namespace: default
+  namespace: map
   labels:
     app: frontend
 spec:
   type: ClusterIP
   ports:
-  - port: 80
-    targetPort: 80 # Must match containerPort
-    protocol: TCP
-    name: http
+    - port: 80
+      targetPort: 80 # Must match containerPort
+      protocol: TCP
+      name: http
   selector:
     app: frontend

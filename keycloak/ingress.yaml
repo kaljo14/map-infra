@@ -1,23 +1,24 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: scraper-ingress
+  name: keycloak-ingress
+  namespace: database
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
 spec:
   ingressClassName: traefik
   tls:
   - hosts:
-    - places-scraper.mustaci.com
-    secretName: scraper-tls
+    - keycloak.mustaci.com
+    secretName: keycloak-tls
   rules:
-  - host: places-scraper.mustaci.com
+  - host: keycloak.mustaci.com
     http:
       paths:
       - path: /
         pathType: Prefix
         backend:
           service:
-            name: places-scraper
+            name: keycloak
             port:
               number: 80

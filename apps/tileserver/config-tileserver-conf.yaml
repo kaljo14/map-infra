@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tileserver-config
+  namespace: map
+  labels:
+    app: tileserver
+data:
+  config.json: |
+    {
+      "options": {
+        "serveStaticMaps": true
+      },
+      "data": {
+        "grid": {
+          "mbtiles": "/data/grid.mbtiles"
+        },
+        "density": {
+          "mbtiles": "/data/density.mbtiles"
+        },
+      }
+    }
+

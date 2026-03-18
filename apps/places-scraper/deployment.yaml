@@ -14,75 +14,79 @@ spec:
     metadata:
       labels:
         app: places-scraper
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9901"
+        prometheus.io/path: "/stats/prometheus"
     spec:
       containers:
-      # Envoy Sidecar (Exposed)
-      - name: envoy
-        image: envoyproxy/envoy:v1.29-latest
-        ports:
-        - name: http
-          containerPort: 8000  # Exposed port
-          protocol: TCP
-        volumeMounts:
-        - name: envoy-config
-          mountPath: /etc/envoy
-          readOnly: true
-        resources:
-          requests:
-            cpu: 50m
-            memory: 64Mi
-          limits:
-            cpu: 200m
-            memory: 256Mi
-      - name: places-scraper
-        image: kaljo14/places-scraper:latest
-        ports:
-        - name: app-port
-          containerPort: 8080
-          protocol: TCP
-        env:
-        - name: PORT
-          value: "8080"
-        - name: POSTGRES_USER
-          valueFrom:
-            secretKeyRef:
-              name: places-scraper-secret
-              key: POSTGRES_USER
-        - name: POSTGRES_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: places-scraper-secret
-              key: POSTGRES_PASSWORD
-        - name: POSTGRES_DB
-          valueFrom:
-            secretKeyRef:
-              name: places-scraper-secret
-              key: POSTGRES_DB
-        - name: POSTGRES_CONN_STRING
-          valueFrom:
-            secretKeyRef:
-              name: places-scraper-secret
-              key: POSTGRES_CONN_STRING
-        - name: GOOGLE_PLACES_API_KEY
-          valueFrom:
-            secretKeyRef:
-              name: scraper-gg-secret
-              key: GOOGLE_PLACES_API_KEY
-        resources:
-          requests:
-            cpu: 100m
-            memory: 256Mi
-          limits:
-            cpu: 500m
-            memory: 1Gi
+        # Envoy Sidecar (Exposed)
+        - name: envoy
+          image: envoyproxy/envoy:v1.29-latest
+          ports:
+            - name: http
+              containerPort: 8000 # Exposed port
+              protocol: TCP
+          volumeMounts:
+            - name: envoy-config
+              mountPath: /etc/envoy
+              readOnly: true
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
+        - name: places-scraper
+          image: kaljo14/places-scraper@sha256:923e71ebcfc82fc4eff8c90d96327b3c0978c13c620d0f1165985bb73d5e512c
+          ports:
+            - name: app-port
+              containerPort: 8080
+              protocol: TCP
+          env:
+            - name: PORT
+              value: "8080"
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: places-scraper-secret
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: places-scraper-secret
+                  key: POSTGRES_PASSWORD
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  name: places-scraper-secret
+                  key: POSTGRES_DB
+            - name: POSTGRES_CONN_STRING
+              valueFrom:
+                secretKeyRef:
+                  name: places-scraper-secret
+                  key: POSTGRES_CONN_STRING
+            - name: GOOGLE_PLACES_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: scraper-gg-secret
+                  key: GOOGLE_PLACES_API_KEY
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 1Gi
 
       volumes:
-      - name: envoy-config
-        configMap:
-          name: scraper-envoy-config
-          items:
-          - key: envoy.yaml
-            path: envoy.yaml
+        - name: envoy-config
+          configMap:
+            name: scraper-envoy-config
+            items:
+              - key: envoy.yaml
+                path: envoy.yaml
 ---
 apiVersion: v1
 kind: Service
@@ -94,9 +98,9 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-  - port: 80
-    targetPort: 8000  # Points to Envoy
-    protocol: TCP
-    name: http
+    - port: 80
+      targetPort: 8000 # Points to Envoy
+      protocol: TCP
+      name: http
   selector:
     app: places-scraper                              

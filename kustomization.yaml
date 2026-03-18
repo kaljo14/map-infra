@@ -1,27 +1,44 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-namespace: map
-
 resources:
+# Keycloak (Auth)
+- keycloak/deployment.yaml
+- keycloak/ingress.yaml
 # Practical Apps
 - apps/tileserver/deployment.yaml
 - apps/tileserver/ingress.yaml
 - apps/tileserver/storage.yaml
 - apps/tileserver/job.yaml
+- apps/tileserver/config-tileserver-conf.yaml
 - apps/places-scraper/deployment.yaml
 - apps/places-scraper/ingress.yaml
+- apps/tileserver/envoy-config.yaml
+- apps/places-scraper/envoy-config.yaml
+- apps/martin/envoy-config.yaml
+- apps/martin/martin-config.yaml
+- apps/martin/deployment.yaml
+- apps/martin/ingress.yaml
 - apps/frontend/deployment.yaml
 - apps/frontend/ingress.yaml
+# Monitoring
+- apps/monitoring/namespace.yaml
+- apps/monitoring/prometheus/rbac.yaml
+- apps/monitoring/prometheus/configmap.yaml
+- apps/monitoring/prometheus/deployment.yaml
+- apps/monitoring/grafana/configmap.yaml
+- apps/monitoring/grafana/storage.yaml
+- apps/monitoring/grafana/deployment.yaml
+- apps/monitoring/grafana/ingress.yaml
+- apps/monitoring/loki/configmap.yaml
+- apps/monitoring/loki/deployment.yaml
+- apps/monitoring/promtail/rbac.yaml
+- apps/monitoring/promtail/configmap.yaml
+- apps/monitoring/promtail/daemonset.yaml
+- apps/monitoring/victoriametrics/deployment.yaml
+- apps/monitoring/blackbox/configmap.yaml
+- apps/monitoring/blackbox/deployment.yaml
 
-# Generate ConfigMaps for each app
-configMapGenerator:
-- name: tileserver-envoy-config
-  files:
-  - envoy.yaml=apps/tileserver/envoy-config.yaml
-- name: scraper-envoy-config
-  files:
-  - envoy.yaml=apps/places-scraper/envoy-config.yaml
 
 labels:
 - pairs:

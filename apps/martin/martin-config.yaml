@@ -1,0 +1,80 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: martin-config
+  namespace: map
+data:
+  martin-config.yaml: |
+    # Martin tile sources derived from the live catalog.
+    # Tile endpoint pattern: https://martin.mustaci.com/{table}/{z}/{x}/{y}
+
+    tables:
+      places:
+        schema: public
+        geometry_column: location
+        minzoom: 0
+        maxzoom: 22
+        id_column: id
+
+      gtfs_stops:
+        schema: public
+        geometry_column: geom
+        minzoom: 0
+        maxzoom: 22
+        id_column: id
+
+      gtfs_route_shapes:
+        schema: public
+        geometry_column: geometry
+        minzoom: 0
+        maxzoom: 22
+        id_column: id
+
+      metro_line_M1:
+        schema: public
+        geometry_column: geometry
+        minzoom: 0
+        maxzoom: 22
+        id_column: id
+
+      metro_line_M2:
+        schema: public
+        geometry_column: geometry
+        minzoom: 0
+        maxzoom: 22
+        id_column: id
+
+      metro_line_M3:
+        schema: public
+        geometry_column: geometry
+        minzoom: 0
+        maxzoom: 22
+        id_column: id
+
+      metro_line_M4:
+        schema: public
+        geometry_column: geometry
+        minzoom: 0
+        maxzoom: 22
+        id_column: id
+
+      population_grid:
+        schema: public
+        geometry_column: geometry
+        minzoom: 0
+        maxzoom: 22
+        id_column: id
+
+      barbershop_density:
+        schema: public
+        geometry_column: geometry
+        minzoom: 0
+        maxzoom: 22
+        id_column: id
+
+      opportunity_heatmap:
+        schema: public
+        geometry_column: geom
+        minzoom: 0
+        maxzoom: 22
+        id_column: id

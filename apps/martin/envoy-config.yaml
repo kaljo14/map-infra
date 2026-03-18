@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: tileserver-envoy-config
+  name: martin-envoy-config
   namespace: map
 data:
   envoy.yaml: |
@@ -10,7 +10,7 @@ data:
         socket_address:
           address: 0.0.0.0
           port_value: 9901
-    
+
     static_resources:
       listeners:
       - name: listener_0
@@ -25,7 +25,7 @@ data:
               "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
               stat_prefix: ingress_http
               codec_type: AUTO
-              
+
               access_log:
               - name: envoy.access_loggers.stdout
                 typed_config:
@@ -48,21 +48,18 @@ data:
                       prefix: "/"
                     route:
                       cluster: local_service
-              
+
               http_filters:
-              # JWT Authentication
               - name: envoy.filters.http.jwt_authn
                 typed_config:
                   "@type": type.googleapis.com/envoy.extensions.filters.http.jwt_authn.v3.JwtAuthentication
                   providers:
                     keycloak:
-                      # Issuer must match the token exactly (usually external URL)
                       issuer: "https://keycloak.mustaci.com/realms/barbershop-realm"
                       audiences:
                       - "barbershop-app"
                       remote_jwks:
                         http_uri:
-                          # Internal URL to fetch keys (faster, stays in cluster)
                           uri: "http://keycloak.database.svc.cluster.local/realms/barbershop-realm/protocol/openid-connect/certs"
                           cluster: keycloak_cluster
                           timeout: 5s
@@ -79,50 +76,47 @@ data:
                     requires:
                       provider_name: "keycloak"
 
-
-              # RBAC
-              # - name: envoy.filters.http.rbac
-              #   typed_config:
-              #     "@type": type.googleapis.com/envoy.extensions.filters.http.rbac.v3.RBAC
-              #     rules:
-              #       action: ALLOW
-              #       policies:
-              #         "map-access":
-              #           permissions:
-              #             - any: true
-              #           principals:
-              #             - metadata:
-              #                 filter: envoy.filters.http.jwt_authn
-              #                 path:
-              #                   - key: jwt_payload
-              #                   - key: realm_access
-              #                   - key: roles
-              #                 value:
-              #                   list_match:
-              #                     one_of:
-              #                       string_match:
-              #                         exact: "map-viewer"
-              #             - metadata:
-              #                 filter: envoy.filters.http.jwt_authn
-              #                 path:
-              #                   - key: jwt_payload
-              #                   - key: realm_access
-              #                   - key: roles
-              #                 value:
-              #                   list_match:
-              #                     one_of:
-              #                       string_match:
-              #                         exact: "admin"
-
+              - name: envoy.filters.http.rbac
+                typed_config:
+                  "@type": type.googleapis.com/envoy.extensions.filters.http.rbac.v3.RBAC
+                  rules:
+                    action: ALLOW
+                    policies:
+                      "map-access":
+                        permissions:
+                          - any: true
+                        principals:
+                          - metadata:
+                              filter: envoy.filters.http.jwt_authn
+                              path:
+                                - key: jwt_payload
+                                - key: realm_access
+                                - key: roles
+                              value:
+                                list_match:
+                                  one_of:
+                                    string_match:
+                                      exact: "map-viewer"
+                          - metadata:
+                              filter: envoy.filters.http.jwt_authn
+                              path:
+                                - key: jwt_payload
+                                - key: realm_access
+                                - key: roles
+                              value:
+                                list_match:
+                                  one_of:
+                                    string_match:
+                                      exact: "admin"
 
               - name: envoy.filters.http.router
                 typed_config:
                   "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
-      
+
       clusters:
       - name: local_service
-        connect_timeout: 5s
-        type: STRICT_DNS
+        connect_timeout: 0.25s
+        type: STATIC
         lb_policy: ROUND_ROBIN
         load_assignment:
           cluster_name: local_service
@@ -131,9 +125,9 @@ data:
             - endpoint:
                 address:
                   socket_address:
-                    address: localhost
-                    port_value: 8080
-      
+                    address: 127.0.0.1
+                    port_value: 3000
+
       - name: keycloak_cluster
         connect_timeout: 5s
         type: STRICT_DNS
