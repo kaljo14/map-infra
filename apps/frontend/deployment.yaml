@@ -22,13 +22,13 @@ spec:
             - name: ENABLE_AUTH
               value: "true"
             - name: PLACES_API_URL
-              value: "https://places-scraper.mustaci.com"
+              value: "http://places-scraper"
             - name: TILES_API_URL
-              value: "https://tiles.mustaci.com"
+              value: "http://tileserver"
             - name: KEYCLOAK_URL
               value: "https://keycloak.mustaci.com"
             - name: MARTIN_API_URL
-              value: "https://martin.mustaci.com"
+              value: "http://martin"
           ports:
             - name: http
               containerPort: 80 # Adjust if your app listens on 3000 or 8080
