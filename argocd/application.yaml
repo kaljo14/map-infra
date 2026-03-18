@@ -14,8 +14,8 @@ spec:
     namespace: map
   syncPolicy:
     automated:
-      prune: true       # removes resources deleted from git
-      selfHeal: true    # reverts manual kubectl changes
+      prune: true # removes resources deleted from git
+      selfHeal: true # reverts manual kubectl changes
     syncOptions:
       - CreateNamespace=true
       - ServerSideApply=true
