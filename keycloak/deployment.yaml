@@ -20,7 +20,7 @@ spec:
       containers:
         - name: keycloak
           image:
-            kaljo14/keycloak-auth@sha256:bf42de855f9e18331a1adb50f4d74b33d2ea4d8a1ddf56568b044c4894c5ebe3
+            kaljo14/keycloak-auth@sha256:c85cd03ff8dda9be7cbc0bb10460718a42b4a3e87073e4dc461807fbd87ed82b
             - start
             - --import-realm
           env:
