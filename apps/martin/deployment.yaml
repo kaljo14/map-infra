@@ -1,31 +1,29 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: tileserver
+  name: martin
   labels:
-    app: tileserver
+    app: martin
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: tileserver
+      app: martin
   template:
     metadata:
       labels:
-        app: tileserver
-    metadata:
+        app: martin
       annotations:
         prometheus.io/scrape: "true"
         prometheus.io/port: "9901"
         prometheus.io/path: "/stats/prometheus"
     spec:
       containers:
-      # Envoy Sidecar (Exposed)
       - name: envoy
         image: envoyproxy/envoy:v1.29-latest
         ports:
         - name: http
-          containerPort: 8000  # Exposed port
+          containerPort: 8000
           protocol: TCP
         volumeMounts:
         - name: envoy-config
@@ -38,61 +36,58 @@ spec:
           limits:
             cpu: 200m
             memory: 256Mi
-      
-      # Tileserver Application (Hidden)
-      - name: tileserver
-        image: maptiler/tileserver-gl:latest
-        args: ["-p", "8080", "--config", "/config/config.json"]
+
+      - name: martin
+        image: ghcr.io/maplibre/martin:latest
+        args: ["--config", "/etc/martin/martin-config.yaml"]
         ports:
         - name: app-port
-          containerPort: 8080
+          containerPort: 3000
           protocol: TCP
-        # Only bind to localhost to ensure no external access bypasses Envoy
-        # Note: tileserver-gl might not support binding only to localhost easily via args,
-        # but since the Service only targets port 8000, it's effectively hidden.
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: places-scraper-secret
+              key: POSTGRES_CONN_STRING
         volumeMounts:
-        - name: tiles
-          mountPath: /data
-        - name: tileserver-config
-          mountPath: /config
+        - name: martin-config
+          mountPath: /etc/martin
           readOnly: true
         resources:
           requests:
             cpu: 100m
-            memory: 256Mi
+            memory: 128Mi
           limits:
             cpu: 500m
-            memory: 1Gi
-      
+            memory: 512Mi
+
       volumes:
       - name: envoy-config
         configMap:
-          name: tileserver-envoy-config
+          name: martin-envoy-config
           items:
           - key: envoy.yaml
             path: envoy.yaml
-      - name: tileserver-config
+      - name: martin-config
         configMap:
-          name: tileserver-config
+          name: martin-config
           items:
-          - key: config.json
-            path: config.json
-      - name: tiles
-        persistentVolumeClaim:
-          claimName: tiles-pvc
+          - key: martin-config.yaml
+            path: martin-config.yaml
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: tileserver
+  name: martin
   labels:
-    app: tileserver
+    app: martin
 spec:
   type: ClusterIP
   ports:
-  - port: 80
-    targetPort: 8000  # Points to Envoy
+  - name: http
+    port: 80
+    targetPort: 8000
     protocol: TCP
-    name: http
   selector:
-    app: tileserver
+    app: martin
