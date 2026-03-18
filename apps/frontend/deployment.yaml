@@ -16,8 +16,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: kaljo14/my-map@sha256:798c837ab5e181a78b4f83995d27c355ece402ee1708faafdc9eacc0e9e9ac02
-          env:
+          image: kaljo14/my-map@sha256:fabd344c82acfb9d0e803edc9d423c2d8c0960441449af545ac87e2d29f70415
             - name: ENABLE_AUTH
               value: "true"
             - name: PLACES_API_URL
