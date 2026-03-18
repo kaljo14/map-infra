@@ -103,4 +103,4 @@ spec:
       protocol: TCP
       name: http
   selector:
-    app: places-scraper
+    app: places-scraper                              

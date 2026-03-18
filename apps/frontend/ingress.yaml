@@ -9,20 +9,20 @@ spec:
   - host: mustaci.com
     http:
       paths:
-      - path: /
-        pathType: Prefix
-        backend:
+      - backend:
           service:
             name: frontend
             port:
               number: 80
+        path: /
+        pathType: Prefix
   - host: www.mustaci.com
     http:
       paths:
-      - path: /
-        pathType: Prefix
-        backend:
+      - backend:
           service:
             name: frontend
             port:
               number: 80
+        path: /
+        pathType: Prefix

@@ -58,6 +58,7 @@ data:
                       issuer: "https://keycloak.mustaci.com/realms/barbershop-realm"
                       audiences:
                       - "barbershop-app"
+                      - "account"
                       remote_jwks:
                         http_uri:
                           uri: "http://keycloak.database.svc.cluster.local/realms/barbershop-realm/protocol/openid-connect/certs"
@@ -77,79 +78,127 @@ data:
                       provider_name: "keycloak"
 
               # RBAC
-              - name: envoy.filters.http.rbac
-                typed_config:
-                  "@type": type.googleapis.com/envoy.extensions.filters.http.rbac.v3.RBAC
-                  rules:
-                    action: ALLOW
-                    policies:
-                      "read-access":
-                        permissions:
-                          - header:
-                              name: ":method"
-                              string_match:
-                                exact: "GET"
-                        principals:
-                          - metadata:
-                              filter: envoy.filters.http.jwt_authn
-                              path:
-                                - key: jwt_payload
-                                - key: realm_access
-                                - key: roles
-                              value:
-                                list_match:
-                                  one_of:
-                                    string_match:
-                                      exact: "data-viewer"
-                          - metadata:
-                              filter: envoy.filters.http.jwt_authn
-                              path:
-                                - key: jwt_payload
-                                - key: realm_access
-                                - key: roles
-                              value:
-                                list_match:
-                                  one_of:
-                                    string_match:
-                                      exact: "admin"
-                      
-                      "write-access":
-                        permissions:
-                          - header:
-                              name: ":method"
-                              string_match:
-                                exact: "POST"
-                          - header:
-                              name: ":method"
-                              string_match:
-                                exact: "PUT"
-                          - header:
-                              name: ":method"
-                              string_match:
-                                exact: "DELETE"
-                        principals:
-                          - metadata:
-                              filter: envoy.filters.http.jwt_authn
-                              path:
-                                - key: jwt_payload
-                                - key: realm_access
-                                - key: roles
-                              value:
-                                list_match:
-                                  one_of:
-                                    string_match:
-                                      exact: "data-editor"
-                          - metadata:
-                              filter: envoy.filters.http.jwt_authn
-                              path:
-                                - key: jwt_payload
-                                - key: realm_access
-                                - key: roles
-                              value:
-                                list_match:
-                                  one_of:
-                                    string_match:
-                                      exact: "admin"
+              # - name: envoy.filters.http.rbac
+              #   typed_config:
+              #     "@type": type.googleapis.com/envoy.extensions.filters.http.rbac.v3.RBAC
+              #     rules:
+              #       action: ALLOW
+              #       policies:
+              #         "read-access":
+              #           permissions:
+              #             - header:
+              #                 name: ":method"
+              #                 string_match:
+              #                   exact: "GET"
+              #           principals:
+              #             - metadata:
+              #                 filter: envoy.filters.http.jwt_authn
+              #                 path:
+              #                   - key: jwt_payload
+              #                   - key: realm_access
+              #                   - key: roles
+              #                 value:
+              #                   list_match:
+              #                     one_of:
+              #                       string_match:
+              #                         exact: "data-viewer"
+              #             - metadata:
+              #                 filter: envoy.filters.http.jwt_authn
+              #                 path:
+              #                   - key: jwt_payload
+              #                   - key: resource_access
+              #                   - key: barbershop-app
+              #                   - key: roles
+              #                 value:
+              #                   list_match:
+              #                     one_of:
+              #                       string_match:
+              #                         exact: "data-viewer"
+              #             - metadata:
+              #                 filter: envoy.filters.http.jwt_authn
+              #                 path:
+              #                   - key: jwt_payload
+              #                   - key: realm_access
+              #                   - key: roles
+              #                 value:
+              #                   list_match:
+              #                     one_of:
+              #                       string_match:
+              #                         exact: "admin"
+              #             - metadata:
+              #                 filter: envoy.filters.http.jwt_authn
+              #                 path:
+              #                   - key: jwt_payload
+              #                   - key: resource_access
+              #                   - key: barbershop-app
+              #                   - key: roles
+              #                 value:
+              #                   list_match:
+              #                     one_of:
+              #                       string_match:
+              #                         exact: "admin"
+              #         
+              #         "write-access":
+              #           permissions:
+              #             - header:
+              #                 name: ":method"
+              #                 string_match:
+              #                   exact: "POST"
+              #             - header:
+              #                 name: ":method"
+              #                 string_match:
+              #                   exact: "PUT"
+              #             - header:
+              #                 name: ":method"
+              #                 string_match:
+              #                   exact: "DELETE"
+              #           principals:
+              #             - metadata:
+              #                 filter: envoy.filters.http.jwt_authn
+              #                 path:
+              #                   - key: jwt_payload
+              #                   - key: realm_access
+              #                   - key: roles
+              #                 value:
+              #                   list_match:
+              #                     one_of:
+              #                       string_match:
+              #                         exact: "data-editor"
+              #             - metadata:
+              #                 filter: envoy.filters.http.jwt_authn
+              #                 path:
+              #                   - key: jwt_payload
+              #                   - key: resource_access
+              #                   - key: barbershop-app
+              #                   - key: roles
+              #                 value:
+              #                   list_match:
+              #                     one_of:
+              #                       string_match:
+              #                         exact: "data-editor"
+              #             - metadata:
+              #                 filter: envoy.filters.http.jwt_authn
+              #                 path:
+              #                   - key: jwt_payload
+              #                   - key: realm_access
+              #                   - key: roles
+              #                 value:
+              #                   list_match:
+              #                     one_of:
+              #                       string_match:
+              #                         exact: "admin"
+              #             - metadata:
+              #                 filter: envoy.filters.http.jwt_authn
+              #                 path:
+              #                   - key: jwt_payload
+              #                   - key: resource_access
+              #                   - key: barbershop-app
+              #                   - key: roles
+              #                 value:
+              #                   list_match:
+              #                     one_of:
+              #                       string_match:
+              #                         exact: "admin"
 
               - name: envoy.filters.http.router
                 typed_config:
@@ -157,8 +206,8 @@ data:
       
       clusters:
       - name: local_service
-        connect_timeout: 0.25s
-        type: STATIC
+        connect_timeout: 5s
+        type: STRICT_DNS
         lb_policy: ROUND_ROBIN
         load_assignment:
           cluster_name: local_service
