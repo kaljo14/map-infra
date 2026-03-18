@@ -27,6 +27,8 @@ spec:
               value: "https://tiles.mustaci.com/"
             - name: KEYCLOAK_URL
               value: "https://keycloak.mustaci.com"
+            - name: MARTIN_API_URL
+              value: "https://martin.mustaci.com/"
           ports:
             - name: http
               containerPort: 80 # Adjust if your app listens on 3000 or 8080
