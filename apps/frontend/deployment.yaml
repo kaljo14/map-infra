@@ -15,28 +15,28 @@ spec:
         app: frontend
     spec:
       containers:
-      - name: frontend
-        image: kaljo14/my-map@sha256:f60ce3dea202354aa508707c70bf38656de49e5d06318a2850a2952baa4610cc
-        env:
-        - name: ENABLE_AUTH
-          value: "true"
-        - name: PLACES_API_URL
-          value: "https://places-scraper.mustaci.com/"
-        - name: TILES_API_URL
-          value: "https://tiles.mustaci.com/"
-        - name: KEYCLOAK_URL
-          value: "https://keycloak.mustaci.com"
-        ports:
-        - name: http
-          containerPort: 80 # Adjust if your app listens on 3000 or 8080
-          protocol: TCP
-        resources:
-          requests:
-            cpu: 100m
-            memory: 128Mi
-          limits:
-            cpu: 500m
-            memory: 512Mi
+        - name: frontend
+          image: kaljo14/my-map@sha256:798c837ab5e181a78b4f83995d27c355ece402ee1708faafdc9eacc0e9e9ac02
+          env:
+            - name: ENABLE_AUTH
+              value: "true"
+            - name: PLACES_API_URL
+              value: "https://places-scraper.mustaci.com/"
+            - name: TILES_API_URL
+              value: "https://tiles.mustaci.com/"
+            - name: KEYCLOAK_URL
+              value: "https://keycloak.mustaci.com"
+          ports:
+            - name: http
+              containerPort: 80 # Adjust if your app listens on 3000 or 8080
+              protocol: TCP
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
 ---
 apiVersion: v1
 kind: Service
@@ -48,9 +48,9 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-  - port: 80
-    targetPort: 80 # Must match containerPort
-    protocol: TCP
-    name: http
+    - port: 80
+      targetPort: 80 # Must match containerPort
+      protocol: TCP
+      name: http
   selector:
     app: frontend

@@ -40,7 +40,7 @@ spec:
             cpu: 200m
             memory: 256Mi
       - name: places-scraper
-        image: kaljo14/places-scraper:latest
+        image: kaljo14/places-scraper@sha256:d153c23b2676254a9ac2ce0027b85a169029322d91f8ceeb6c395de1f6a41e3a
         ports:
         - name: app-port
           containerPort: 8080
