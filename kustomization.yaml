@@ -12,6 +12,8 @@ resources:
 - apps/tileserver/config-tileserver-conf.yaml
 - apps/places-scraper/deployment.yaml
 - apps/places-scraper/ingress.yaml
+- apps/tileserver/envoy-config.yaml
+- apps/places-scraper/envoy-config.yaml
 - apps/martin/envoy-config.yaml
 - apps/martin/martin-config.yaml
 - apps/martin/deployment.yaml
@@ -36,14 +38,6 @@ resources:
 - apps/monitoring/blackbox/configmap.yaml
 - apps/monitoring/blackbox/deployment.yaml
 
-# Generate ConfigMaps for each app
-configMapGenerator:
-- name: tileserver-envoy-config
-  files:
-  - envoy.yaml=apps/tileserver/envoy-config.yaml
-- name: scraper-envoy-config
-  files:
-  - envoy.yaml=apps/places-scraper/envoy-config.yaml
 
 labels:
 - pairs:
