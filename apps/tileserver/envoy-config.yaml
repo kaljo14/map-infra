@@ -63,7 +63,7 @@ data:
                       remote_jwks:
                         http_uri:
                           # Internal URL to fetch keys (faster, stays in cluster)
-                          uri: "http://keycloak.default.svc.cluster.local/realms/barbershop-realm/protocol/openid-connect/certs"
+                          uri: "http://keycloak.database.svc.cluster.local/realms/barbershop-realm/protocol/openid-connect/certs"
                           cluster: keycloak_cluster
                           timeout: 5s
                         cache_duration:
@@ -143,5 +143,5 @@ data:
             - endpoint:
                 address:
                   socket_address:
-                    address: keycloak.default.svc.cluster.local
+                    address: keycloak.database.svc.cluster.local
                     port_value: 80
