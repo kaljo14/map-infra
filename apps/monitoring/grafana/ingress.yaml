@@ -3,23 +3,16 @@ kind: Ingress
 metadata:
   name: grafana
   namespace: monitoring
-  annotations:
-    kubernetes.io/ingress.class: traefik
-    cert-manager.io/cluster-issuer: letsencrypt-prod
-    traefik.ingress.kubernetes.io/router.middlewares: default-redirect-https@kubernetescrd
 spec:
+  ingressClassName: traefik
   rules:
-    - host: grafana.mustaci.com
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: grafana
-                port:
-                  number: 3000
-  tls:
-    - secretName: grafana-tls
-      hosts:
-        - grafana.mustaci.com
+  - host: grafana.mustaci.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: grafana
+            port:
+              number: 3000

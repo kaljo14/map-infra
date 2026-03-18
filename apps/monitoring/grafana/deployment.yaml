@@ -20,7 +20,7 @@ spec:
             - name: GF_SECURITY_ADMIN_USER
               value: admin
             - name: GF_SECURITY_ADMIN_PASSWORD
-              value: admin
+              value: "123"
             - name: GF_PATHS_PROVISIONING
               value: /etc/grafana/provisioning
             - name: GF_SERVER_ROOT_URL
