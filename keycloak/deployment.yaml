@@ -19,8 +19,8 @@ spec:
         - name: docker-hub-secret
       containers:
         - name: keycloak
-          image:
-            kaljo14/keycloak-auth@sha256:c85cd03ff8dda9be7cbc0bb10460718a42b4a3e87073e4dc461807fbd87ed82b
+          image: kaljo14/keycloak-auth:latest
+          args:
             - start
             - --import-realm
           env:
