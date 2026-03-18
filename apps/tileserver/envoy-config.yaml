@@ -57,7 +57,7 @@ data:
                   providers:
                     keycloak:
                       # Issuer must match the token exactly (usually external URL)
-                      issuer: "https://keycloack.mustaci.com/realms/barbershop-realm"
+                      issuer: "https://keycloak.mustaci.com/realms/barbershop-realm"
                       audiences:
                       - "barbershop-app"
                       remote_jwks:

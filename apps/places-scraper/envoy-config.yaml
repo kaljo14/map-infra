@@ -55,7 +55,7 @@ data:
                   "@type": type.googleapis.com/envoy.extensions.filters.http.jwt_authn.v3.JwtAuthentication
                   providers:
                     keycloak:
-                      issuer: "https://keycloack.mustaci.com/realms/barbershop-realm"
+                      issuer: "https://keycloak.mustaci.com/realms/barbershop-realm"
                       audiences:
                       - "barbershop-app"
                       remote_jwks:
