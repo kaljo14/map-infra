@@ -19,7 +19,7 @@ spec:
         - name: docker-hub-secret
       containers:
         - name: keycloak
-          image: kaljo14/keycloak-auth@sha256:529d0b4d7716c26a5520b45049290ee7e7b184193620e93769e697cb083ce6e2
+          image: kaljo14/keycloak-auth@sha256:024cbe328b02c0338aec8bf3afc1cf442c021c96384080efc85411525c36171c
           imagePullPolicy: Always
           args:
             - start
