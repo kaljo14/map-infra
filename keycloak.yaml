@@ -1,0 +1,1066 @@
+apiVersion: v1
+items:
+- apiVersion: v1
+  kind: Pod
+  metadata:
+    creationTimestamp: "2025-11-21T17:17:17Z"
+    generateName: keycloak-cc5947988-
+    generation: 1
+    labels:
+      app: keycloak
+      pod-template-hash: cc5947988
+    name: keycloak-cc5947988-7r54v
+    namespace: database
+    ownerReferences:
+    - apiVersion: apps/v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: ReplicaSet
+      name: keycloak-cc5947988
+      uid: 3c92e095-a48d-482a-b9c3-7ded1bac6f6a
+    resourceVersion: "5018282"
+    uid: 6b009a3c-a94f-4973-bacd-c154bd3f6703
+  spec:
+    containers:
+    - args:
+      - start
+      - --import-realm
+      env:
+      - name: KC_DB
+        value: postgres
+      - name: KC_DB_URL
+        value: jdbc:postgresql://postgres-postgresql:5432/keycloak
+      - name: KC_DB_USERNAME
+        value: keycloak
+      - name: KC_DB_PASSWORD
+        valueFrom:
+          secretKeyRef:
+            key: password
+            name: postgres-auth-secret
+      - name: KEYCLOAK_ADMIN
+        value: admin
+      - name: KEYCLOAK_ADMIN_PASSWORD
+        valueFrom:
+          secretKeyRef:
+            key: admin-password
+            name: keycloak-admin-secret
+      - name: KC_HTTP_PORT
+        value: "8080"
+      - name: KC_HOSTNAME_URL
+        value: https://keycloak.mustaci.com
+      - name: KC_HOSTNAME_ADMIN_URL
+        value: https://keycloak.mustaci.com
+      - name: KC_HOSTNAME_STRICT
+        value: "false"
+      - name: KC_HOSTNAME_STRICT_HTTPS
+        value: "false"
+      - name: KC_HTTP_ENABLED
+        value: "true"
+      - name: KC_PROXY
+        value: edge
+      image: kaljo14/keycloak-auth:latest
+      imagePullPolicy: Always
+      livenessProbe:
+        failureThreshold: 5
+        httpGet:
+          path: /realms/master
+          port: 8080
+          scheme: HTTP
+        initialDelaySeconds: 120
+        periodSeconds: 30
+        successThreshold: 1
+        timeoutSeconds: 5
+      name: keycloak
+      ports:
+      - containerPort: 8080
+        name: http
+        protocol: TCP
+      readinessProbe:
+        failureThreshold: 30
+        httpGet:
+          path: /realms/master
+          port: 8080
+          scheme: HTTP
+        initialDelaySeconds: 60
+        periodSeconds: 10
+        successThreshold: 1
+        timeoutSeconds: 5
+      resources:
+        limits:
+          cpu: "1"
+          memory: 1Gi
+        requests:
+          cpu: 500m
+          memory: 512Mi
+      terminationMessagePath: /dev/termination-log
+      terminationMessagePolicy: File
+      volumeMounts:
+      - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+        name: kube-api-access-rrxzb
+        readOnly: true
+    dnsPolicy: ClusterFirst
+    enableServiceLinks: true
+    imagePullSecrets:
+    - name: docker-hub-secret
+    nodeName: raspberrypi
+    preemptionPolicy: PreemptLowerPriority
+    priority: 0
+    restartPolicy: Always
+    schedulerName: default-scheduler
+    securityContext: {}
+    serviceAccount: default
+    serviceAccountName: default
+    terminationGracePeriodSeconds: 30
+    tolerations:
+    - effect: NoExecute
+      key: node.kubernetes.io/not-ready
+      operator: Exists
+      tolerationSeconds: 300
+    - effect: NoExecute
+      key: node.kubernetes.io/unreachable
+      operator: Exists
+      tolerationSeconds: 300
+    volumes:
+    - name: kube-api-access-rrxzb
+      projected:
+        defaultMode: 420
+        sources:
+        - serviceAccountToken:
+            expirationSeconds: 3607
+            path: token
+        - configMap:
+            items:
+            - key: ca.crt
+              path: ca.crt
+            name: kube-root-ca.crt
+        - downwardAPI:
+            items:
+            - fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.namespace
+              path: namespace
+  status:
+    conditions:
+    - lastProbeTime: null
+      lastTransitionTime: "2026-03-16T17:01:04Z"
+      status: "True"
+      type: PodReadyToStartContainers
+    - lastProbeTime: null
+      lastTransitionTime: "2025-11-21T17:17:18Z"
+      status: "True"
+      type: Initialized
+    - lastProbeTime: null
+      lastTransitionTime: "2026-03-16T17:03:36Z"
+      status: "True"
+      type: Ready
+    - lastProbeTime: null
+      lastTransitionTime: "2026-03-16T17:03:36Z"
+      status: "True"
+      type: ContainersReady
+    - lastProbeTime: null
+      lastTransitionTime: "2025-11-21T17:17:17Z"
+      status: "True"
+      type: PodScheduled
+    containerStatuses:
+    - allocatedResources:
+        cpu: 500m
+        memory: 512Mi
+      containerID: containerd://841aff17ffd70bdce387038e359890a96103662e3d638ccfa7bbeb787ee7f6b1
+      image: docker.io/kaljo14/keycloak-auth:latest
+      imageID: docker.io/kaljo14/keycloak-auth@sha256:58d9ca3422a574225c5043578a494fb437351500e189d3d029088cad21ebf9de
+      lastState:
+        terminated:
+          containerID: containerd://4b4a27b9eea56389ca4e0b3eb8e72b11dad8a5169091746cd37413f81b0e7e0a
+          exitCode: 255
+          finishedAt: "2026-03-16T17:00:34Z"
+          reason: Unknown
+          startedAt: "2026-03-13T15:52:21Z"
+      name: keycloak
+      ready: true
+      resources:
+        limits:
+          cpu: "1"
+          memory: 1Gi
+        requests:
+          cpu: 500m
+          memory: 512Mi
+      restartCount: 4
+      started: true
+      state:
+        running:
+          startedAt: "2026-03-16T17:01:42Z"
+      user:
+        linux:
+          gid: 0
+          supplementalGroups:
+          - 0
+          uid: 1000
+      volumeMounts:
+      - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+        name: kube-api-access-rrxzb
+        readOnly: true
+        recursiveReadOnly: Disabled
+    hostIP: 192.168.0.137
+    hostIPs:
+    - ip: 192.168.0.137
+    phase: Running
+    podIP: 10.42.0.42
+    podIPs:
+    - ip: 10.42.0.42
+    qosClass: Burstable
+    startTime: "2025-11-21T17:17:18Z"
+- apiVersion: v1
+  kind: Pod
+  metadata:
+    creationTimestamp: "2025-11-20T17:03:00Z"
+    generateName: postgres-postgresql-
+    generation: 1
+    labels:
+      app.kubernetes.io/component: primary
+      app.kubernetes.io/instance: postgres
+      app.kubernetes.io/managed-by: Helm
+      app.kubernetes.io/name: postgresql
+      app.kubernetes.io/version: 18.1.0
+      apps.kubernetes.io/pod-index: "0"
+      controller-revision-hash: postgres-postgresql-5bc6966c58
+      helm.sh/chart: postgresql-18.1.11
+      statefulset.kubernetes.io/pod-name: postgres-postgresql-0
+    name: postgres-postgresql-0
+    namespace: database
+    ownerReferences:
+    - apiVersion: apps/v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: StatefulSet
+      name: postgres-postgresql
+      uid: 3938f3e7-83c1-4d52-9a21-bafbbd02018f
+    resourceVersion: "5018151"
+    uid: fe7ba52a-89b6-437a-9612-cc2125680be3
+  spec:
+    affinity:
+      podAntiAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+        - podAffinityTerm:
+            labelSelector:
+              matchLabels:
+                app.kubernetes.io/component: primary
+                app.kubernetes.io/instance: postgres
+                app.kubernetes.io/name: postgresql
+            topologyKey: kubernetes.io/hostname
+          weight: 1
+    automountServiceAccountToken: false
+    containers:
+    - env:
+      - name: BITNAMI_DEBUG
+        value: "false"
+      - name: POSTGRESQL_PORT_NUMBER
+        value: "5432"
+      - name: POSTGRESQL_VOLUME_DIR
+        value: /bitnami/postgresql
+      - name: OPENSSL_FIPS
+        value: "yes"
+      - name: PGDATA
+        value: /bitnami/postgresql/data
+      - name: POSTGRES_USER
+        value: keycloak
+      - name: POSTGRES_PASSWORD_FILE
+        value: /opt/bitnami/postgresql/secrets/password
+      - name: POSTGRES_POSTGRES_PASSWORD_FILE
+        value: /opt/bitnami/postgresql/secrets/postgres-password
+      - name: POSTGRES_DATABASE
+        value: keycloak
+      - name: POSTGRESQL_ENABLE_LDAP
+        value: "no"
+      - name: POSTGRESQL_ENABLE_TLS
+        value: "no"
+      - name: POSTGRESQL_LOG_HOSTNAME
+        value: "false"
+      - name: POSTGRESQL_LOG_CONNECTIONS
+        value: "false"
+      - name: POSTGRESQL_LOG_DISCONNECTIONS
+        value: "false"
+      - name: POSTGRESQL_PGAUDIT_LOG_CATALOG
+        value: "off"
+      - name: POSTGRESQL_CLIENT_MIN_MESSAGES
+        value: error
+      - name: POSTGRESQL_SHARED_PRELOAD_LIBRARIES
+        value: pgaudit
+      image: registry-1.docker.io/bitnami/postgresql:latest
+      imagePullPolicy: IfNotPresent
+      livenessProbe:
+        exec:
+          command:
+          - /bin/sh
+          - -c
+          - exec pg_isready -U "keycloak" -d "dbname=keycloak" -h 127.0.0.1 -p 5432
+        failureThreshold: 6
+        initialDelaySeconds: 30
+        periodSeconds: 10
+        successThreshold: 1
+        timeoutSeconds: 5
+      name: postgresql
+      ports:
+      - containerPort: 5432
+        name: tcp-postgresql
+        protocol: TCP
+      readinessProbe:
+        exec:
+          command:
+          - /bin/sh
+          - -c
+          - -e
+          - |
+            exec pg_isready -U "keycloak" -d "dbname=keycloak" -h 127.0.0.1 -p 5432
+            [ -f /opt/bitnami/postgresql/tmp/.initialized ] || [ -f /bitnami/postgresql/.initialized ]
+        failureThreshold: 6
+        initialDelaySeconds: 5
+        periodSeconds: 10
+        successThreshold: 1
+        timeoutSeconds: 5
+      resources:
+        limits:
+          cpu: "1"
+          memory: 1Gi
+        requests:
+          cpu: 250m
+          memory: 256Mi
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+          - ALL
+        privileged: false
+        readOnlyRootFilesystem: true
+        runAsGroup: 1001
+        runAsNonRoot: true
+        runAsUser: 1001
+        seLinuxOptions: {}
+        seccompProfile:
+          type: RuntimeDefault
+      terminationMessagePath: /dev/termination-log
+      terminationMessagePolicy: File
+      volumeMounts:
+      - mountPath: /tmp
+        name: empty-dir
+        subPath: tmp-dir
+      - mountPath: /opt/bitnami/postgresql/conf
+        name: empty-dir
+        subPath: app-conf-dir
+      - mountPath: /opt/bitnami/postgresql/tmp
+        name: empty-dir
+        subPath: app-tmp-dir
+      - mountPath: /docker-entrypoint-initdb.d/secret
+        name: custom-init-scripts-secret
+      - mountPath: /opt/bitnami/postgresql/secrets/
+        name: postgresql-password
+      - mountPath: /dev/shm
+        name: dshm
+      - mountPath: /bitnami/postgresql
+        name: data
+    dnsPolicy: ClusterFirst
+    enableServiceLinks: true
+    hostname: postgres-postgresql-0
+    nodeName: raspberrypi
+    preemptionPolicy: PreemptLowerPriority
+    priority: 0
+    restartPolicy: Always
+    schedulerName: default-scheduler
+    securityContext:
+      fsGroup: 1001
+      fsGroupChangePolicy: Always
+    serviceAccount: postgres-postgresql
+    serviceAccountName: postgres-postgresql
+    subdomain: postgres-postgresql-hl
+    terminationGracePeriodSeconds: 30
+    tolerations:
+    - effect: NoExecute
+      key: node.kubernetes.io/not-ready
+      operator: Exists
+      tolerationSeconds: 300
+    - effect: NoExecute
+      key: node.kubernetes.io/unreachable
+      operator: Exists
+      tolerationSeconds: 300
+    volumes:
+    - name: data
+      persistentVolumeClaim:
+        claimName: data-postgres-postgresql-0
+    - emptyDir: {}
+      name: empty-dir
+    - name: postgresql-password
+      secret:
+        defaultMode: 420
+        secretName: postgres-auth-secret
+    - name: custom-init-scripts-secret
+      secret:
+        defaultMode: 420
+        secretName: postgres-init-scripts
+    - emptyDir:
+        medium: Memory
+      name: dshm
+  status:
+    conditions:
+    - lastProbeTime: null
+      lastTransitionTime: "2026-03-16T17:01:33Z"
+      status: "True"
+      type: PodReadyToStartContainers
+    - lastProbeTime: null
+      lastTransitionTime: "2025-11-20T17:03:00Z"
+      status: "True"
+      type: Initialized
+    - lastProbeTime: null
+      lastTransitionTime: "2026-03-16T17:01:46Z"
+      status: "True"
+      type: Ready
+    - lastProbeTime: null
+      lastTransitionTime: "2026-03-16T17:01:46Z"
+      status: "True"
+      type: ContainersReady
+    - lastProbeTime: null
+      lastTransitionTime: "2025-11-20T17:03:00Z"
+      status: "True"
+      type: PodScheduled
+    containerStatuses:
+    - allocatedResources:
+        cpu: 250m
+        memory: 256Mi
+      containerID: containerd://11b3f71de73b1d9bf53bdd54713f6c3a8575d9af175176f194aa5ad2447e4f04
+      image: registry-1.docker.io/bitnami/postgresql:latest
+      imageID: registry-1.docker.io/bitnami/postgresql@sha256:4237ea262ad7aa0fdbb5f04015581cc6372aecb6741cce97ddaca3fe51ebeceb
+      lastState:
+        terminated:
+          containerID: containerd://d4119c8aa41dd73aaa8328a290d070edb1295d532cb32764267e080c59c4e473
+          exitCode: 255
+          finishedAt: "2026-03-16T17:00:34Z"
+          reason: Unknown
+          startedAt: "2026-03-13T15:52:13Z"
+      name: postgresql
+      ready: true
+      resources:
+        limits:
+          cpu: "1"
+          memory: 1Gi
+        requests:
+          cpu: 250m
+          memory: 256Mi
+      restartCount: 4
+      started: true
+      state:
+        running:
+          startedAt: "2026-03-16T17:01:33Z"
+      user:
+        linux:
+          gid: 1001
+          supplementalGroups:
+          - 1001
+          uid: 1001
+      volumeMounts:
+      - mountPath: /tmp
+        name: empty-dir
+      - mountPath: /opt/bitnami/postgresql/conf
+        name: empty-dir
+      - mountPath: /opt/bitnami/postgresql/tmp
+        name: empty-dir
+      - mountPath: /docker-entrypoint-initdb.d/secret
+        name: custom-init-scripts-secret
+      - mountPath: /opt/bitnami/postgresql/secrets/
+        name: postgresql-password
+      - mountPath: /dev/shm
+        name: dshm
+      - mountPath: /bitnami/postgresql
+        name: data
+    hostIP: 192.168.0.137
+    hostIPs:
+    - ip: 192.168.0.137
+    phase: Running
+    podIP: 10.42.0.58
+    podIPs:
+    - ip: 10.42.0.58
+    qosClass: Burstable
+    startTime: "2025-11-20T17:03:00Z"
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Service","metadata":{"annotations":{},"labels":{"app":"keycloak"},"name":"keycloak","namespace":"database"},"spec":{"ports":[{"name":"http","port":80,"protocol":"TCP","targetPort":8080}],"selector":{"app":"keycloak"},"type":"ClusterIP"}}
+    creationTimestamp: "2025-11-20T18:12:00Z"
+    labels:
+      app: keycloak
+    name: keycloak
+    namespace: database
+    resourceVersion: "1970883"
+    uid: 677870d5-c033-4947-9e2a-5063d85d65b2
+  spec:
+    clusterIP: 10.43.100.177
+    clusterIPs:
+    - 10.43.100.177
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - name: http
+      port: 80
+      protocol: TCP
+      targetPort: 8080
+    selector:
+      app: keycloak
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      meta.helm.sh/release-name: postgres
+      meta.helm.sh/release-namespace: database
+    creationTimestamp: "2025-11-20T17:03:00Z"
+    labels:
+      app.kubernetes.io/component: primary
+      app.kubernetes.io/instance: postgres
+      app.kubernetes.io/managed-by: Helm
+      app.kubernetes.io/name: postgresql
+      app.kubernetes.io/version: 18.1.0
+      helm.sh/chart: postgresql-18.1.11
+    name: postgres-postgresql
+    namespace: database
+    resourceVersion: "1969428"
+    uid: 72973e03-7af9-44b0-83fc-b9f41312f81c
+  spec:
+    clusterIP: 10.43.157.246
+    clusterIPs:
+    - 10.43.157.246
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - name: tcp-postgresql
+      port: 5432
+      protocol: TCP
+      targetPort: tcp-postgresql
+    selector:
+      app.kubernetes.io/component: primary
+      app.kubernetes.io/instance: postgres
+      app.kubernetes.io/name: postgresql
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      meta.helm.sh/release-name: postgres
+      meta.helm.sh/release-namespace: database
+    creationTimestamp: "2025-11-20T17:03:00Z"
+    labels:
+      app.kubernetes.io/component: primary
+      app.kubernetes.io/instance: postgres
+      app.kubernetes.io/managed-by: Helm
+      app.kubernetes.io/name: postgresql
+      app.kubernetes.io/version: 18.1.0
+      helm.sh/chart: postgresql-18.1.11
+    name: postgres-postgresql-hl
+    namespace: database
+    resourceVersion: "1969424"
+    uid: bd3c080f-13f6-4746-ac7d-6ee6c69588b3
+  spec:
+    clusterIP: None
+    clusterIPs:
+    - None
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - name: tcp-postgresql
+      port: 5432
+      protocol: TCP
+      targetPort: tcp-postgresql
+    publishNotReadyAddresses: true
+    selector:
+      app.kubernetes.io/component: primary
+      app.kubernetes.io/instance: postgres
+      app.kubernetes.io/name: postgresql
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      deployment.kubernetes.io/revision: "1"
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"labels":{"app":"keycloak"},"name":"keycloak","namespace":"database"},"spec":{"replicas":1,"selector":{"matchLabels":{"app":"keycloak"}},"template":{"metadata":{"labels":{"app":"keycloak"}},"spec":{"containers":[{"args":["start","--import-realm"],"env":[{"name":"KC_DB","value":"postgres"},{"name":"KC_DB_URL","value":"jdbc:postgresql://postgres-postgresql:5432/keycloak"},{"name":"KC_DB_USERNAME","value":"keycloak"},{"name":"KC_DB_PASSWORD","valueFrom":{"secretKeyRef":{"key":"password","name":"postgres-auth-secret"}}},{"name":"KEYCLOAK_ADMIN","value":"admin"},{"name":"KEYCLOAK_ADMIN_PASSWORD","valueFrom":{"secretKeyRef":{"key":"admin-password","name":"keycloak-admin-secret"}}},{"name":"KC_HTTP_PORT","value":"8080"},{"name":"KC_HOSTNAME_URL","value":"https://keycloak.mustaci.com"},{"name":"KC_HOSTNAME_ADMIN_URL","value":"https://keycloak.mustaci.com"},{"name":"KC_HOSTNAME_STRICT","value":"false"},{"name":"KC_HOSTNAME_STRICT_HTTPS","value":"false"},{"name":"KC_HTTP_ENABLED","value":"true"},{"name":"KC_PROXY","value":"edge"}],"image":"kaljo14/keycloak-auth:latest","imagePullPolicy":"Always","livenessProbe":{"failureThreshold":5,"httpGet":{"path":"/realms/master","port":8080},"initialDelaySeconds":120,"periodSeconds":30,"timeoutSeconds":5},"name":"keycloak","ports":[{"containerPort":8080,"name":"http"}],"readinessProbe":{"failureThreshold":30,"httpGet":{"path":"/realms/master","port":8080},"initialDelaySeconds":60,"periodSeconds":10,"timeoutSeconds":5},"resources":{"limits":{"cpu":"1000m","memory":"1Gi"},"requests":{"cpu":"500m","memory":"512Mi"}}}],"imagePullSecrets":[{"name":"docker-hub-secret"}]}}}}
+    creationTimestamp: "2025-11-20T19:18:43Z"
+    generation: 1
+    labels:
+      app: keycloak
+    name: keycloak
+    namespace: database
+    resourceVersion: "5018286"
+    uid: 1e83dc5a-5fa3-4a73-b044-c5115b126aa0
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 1
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app: keycloak
+    strategy:
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 25%
+      type: RollingUpdate
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          app: keycloak
+      spec:
+        containers:
+        - args:
+          - start
+          - --import-realm
+          env:
+          - name: KC_DB
+            value: postgres
+          - name: KC_DB_URL
+            value: jdbc:postgresql://postgres-postgresql:5432/keycloak
+          - name: KC_DB_USERNAME
+            value: keycloak
+          - name: KC_DB_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: password
+                name: postgres-auth-secret
+          - name: KEYCLOAK_ADMIN
+            value: admin
+          - name: KEYCLOAK_ADMIN_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: admin-password
+                name: keycloak-admin-secret
+          - name: KC_HTTP_PORT
+            value: "8080"
+          - name: KC_HOSTNAME_URL
+            value: https://keycloak.mustaci.com
+          - name: KC_HOSTNAME_ADMIN_URL
+            value: https://keycloak.mustaci.com
+          - name: KC_HOSTNAME_STRICT
+            value: "false"
+          - name: KC_HOSTNAME_STRICT_HTTPS
+            value: "false"
+          - name: KC_HTTP_ENABLED
+            value: "true"
+          - name: KC_PROXY
+            value: edge
+          image: kaljo14/keycloak-auth:latest
+          imagePullPolicy: Always
+          livenessProbe:
+            failureThreshold: 5
+            httpGet:
+              path: /realms/master
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 120
+            periodSeconds: 30
+            successThreshold: 1
+            timeoutSeconds: 5
+          name: keycloak
+          ports:
+          - containerPort: 8080
+            name: http
+            protocol: TCP
+          readinessProbe:
+            failureThreshold: 30
+            httpGet:
+              path: /realms/master
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          resources:
+            limits:
+              cpu: "1"
+              memory: 1Gi
+            requests:
+              cpu: 500m
+              memory: 512Mi
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        dnsPolicy: ClusterFirst
+        imagePullSecrets:
+        - name: docker-hub-secret
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+  status:
+    availableReplicas: 1
+    conditions:
+    - lastTransitionTime: "2025-11-20T19:18:43Z"
+      lastUpdateTime: "2025-11-20T19:20:21Z"
+      message: ReplicaSet "keycloak-cc5947988" has successfully progressed.
+      reason: NewReplicaSetAvailable
+      status: "True"
+      type: Progressing
+    - lastTransitionTime: "2026-03-16T17:03:36Z"
+      lastUpdateTime: "2026-03-16T17:03:36Z"
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    observedGeneration: 1
+    readyReplicas: 1
+    replicas: 1
+    updatedReplicas: 1
+- apiVersion: apps/v1
+  kind: ReplicaSet
+  metadata:
+    annotations:
+      deployment.kubernetes.io/desired-replicas: "1"
+      deployment.kubernetes.io/max-replicas: "2"
+      deployment.kubernetes.io/revision: "1"
+    creationTimestamp: "2025-11-20T19:18:43Z"
+    generation: 1
+    labels:
+      app: keycloak
+      pod-template-hash: cc5947988
+    name: keycloak-cc5947988
+    namespace: database
+    ownerReferences:
+    - apiVersion: apps/v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: Deployment
+      name: keycloak
+      uid: 1e83dc5a-5fa3-4a73-b044-c5115b126aa0
+    resourceVersion: "5018285"
+    uid: 3c92e095-a48d-482a-b9c3-7ded1bac6f6a
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        app: keycloak
+        pod-template-hash: cc5947988
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          app: keycloak
+          pod-template-hash: cc5947988
+      spec:
+        containers:
+        - args:
+          - start
+          - --import-realm
+          env:
+          - name: KC_DB
+            value: postgres
+          - name: KC_DB_URL
+            value: jdbc:postgresql://postgres-postgresql:5432/keycloak
+          - name: KC_DB_USERNAME
+            value: keycloak
+          - name: KC_DB_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: password
+                name: postgres-auth-secret
+          - name: KEYCLOAK_ADMIN
+            value: admin
+          - name: KEYCLOAK_ADMIN_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: admin-password
+                name: keycloak-admin-secret
+          - name: KC_HTTP_PORT
+            value: "8080"
+          - name: KC_HOSTNAME_URL
+            value: https://keycloak.mustaci.com
+          - name: KC_HOSTNAME_ADMIN_URL
+            value: https://keycloak.mustaci.com
+          - name: KC_HOSTNAME_STRICT
+            value: "false"
+          - name: KC_HOSTNAME_STRICT_HTTPS
+            value: "false"
+          - name: KC_HTTP_ENABLED
+            value: "true"
+          - name: KC_PROXY
+            value: edge
+          image: kaljo14/keycloak-auth:latest
+          imagePullPolicy: Always
+          livenessProbe:
+            failureThreshold: 5
+            httpGet:
+              path: /realms/master
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 120
+            periodSeconds: 30
+            successThreshold: 1
+            timeoutSeconds: 5
+          name: keycloak
+          ports:
+          - containerPort: 8080
+            name: http
+            protocol: TCP
+          readinessProbe:
+            failureThreshold: 30
+            httpGet:
+              path: /realms/master
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          resources:
+            limits:
+              cpu: "1"
+              memory: 1Gi
+            requests:
+              cpu: 500m
+              memory: 512Mi
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        dnsPolicy: ClusterFirst
+        imagePullSecrets:
+        - name: docker-hub-secret
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+  status:
+    availableReplicas: 1
+    fullyLabeledReplicas: 1
+    observedGeneration: 1
+    readyReplicas: 1
+    replicas: 1
+- apiVersion: apps/v1
+  kind: StatefulSet
+  metadata:
+    annotations:
+      meta.helm.sh/release-name: postgres
+      meta.helm.sh/release-namespace: database
+    creationTimestamp: "2025-11-20T17:03:00Z"
+    generation: 1
+    labels:
+      app.kubernetes.io/component: primary
+      app.kubernetes.io/instance: postgres
+      app.kubernetes.io/managed-by: Helm
+      app.kubernetes.io/name: postgresql
+      app.kubernetes.io/version: 18.1.0
+      helm.sh/chart: postgresql-18.1.11
+    name: postgres-postgresql
+    namespace: database
+    resourceVersion: "5018156"
+    uid: 3938f3e7-83c1-4d52-9a21-bafbbd02018f
+  spec:
+    persistentVolumeClaimRetentionPolicy:
+      whenDeleted: Retain
+      whenScaled: Retain
+    podManagementPolicy: OrderedReady
+    replicas: 1
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app.kubernetes.io/component: primary
+        app.kubernetes.io/instance: postgres
+        app.kubernetes.io/name: postgresql
+    serviceName: postgres-postgresql-hl
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          app.kubernetes.io/component: primary
+          app.kubernetes.io/instance: postgres
+          app.kubernetes.io/managed-by: Helm
+          app.kubernetes.io/name: postgresql
+          app.kubernetes.io/version: 18.1.0
+          helm.sh/chart: postgresql-18.1.11
+        name: postgres-postgresql
+      spec:
+        affinity:
+          podAntiAffinity:
+            preferredDuringSchedulingIgnoredDuringExecution:
+            - podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app.kubernetes.io/component: primary
+                    app.kubernetes.io/instance: postgres
+                    app.kubernetes.io/name: postgresql
+                topologyKey: kubernetes.io/hostname
+              weight: 1
+        automountServiceAccountToken: false
+        containers:
+        - env:
+          - name: BITNAMI_DEBUG
+            value: "false"
+          - name: POSTGRESQL_PORT_NUMBER
+            value: "5432"
+          - name: POSTGRESQL_VOLUME_DIR
+            value: /bitnami/postgresql
+          - name: OPENSSL_FIPS
+            value: "yes"
+          - name: PGDATA
+            value: /bitnami/postgresql/data
+          - name: POSTGRES_USER
+            value: keycloak
+          - name: POSTGRES_PASSWORD_FILE
+            value: /opt/bitnami/postgresql/secrets/password
+          - name: POSTGRES_POSTGRES_PASSWORD_FILE
+            value: /opt/bitnami/postgresql/secrets/postgres-password
+          - name: POSTGRES_DATABASE
+            value: keycloak
+          - name: POSTGRESQL_ENABLE_LDAP
+            value: "no"
+          - name: POSTGRESQL_ENABLE_TLS
+            value: "no"
+          - name: POSTGRESQL_LOG_HOSTNAME
+            value: "false"
+          - name: POSTGRESQL_LOG_CONNECTIONS
+            value: "false"
+          - name: POSTGRESQL_LOG_DISCONNECTIONS
+            value: "false"
+          - name: POSTGRESQL_PGAUDIT_LOG_CATALOG
+            value: "off"
+          - name: POSTGRESQL_CLIENT_MIN_MESSAGES
+            value: error
+          - name: POSTGRESQL_SHARED_PRELOAD_LIBRARIES
+            value: pgaudit
+          image: registry-1.docker.io/bitnami/postgresql:latest
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            exec:
+              command:
+              - /bin/sh
+              - -c
+              - exec pg_isready -U "keycloak" -d "dbname=keycloak" -h 127.0.0.1 -p
+                5432
+            failureThreshold: 6
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          name: postgresql
+          ports:
+          - containerPort: 5432
+            name: tcp-postgresql
+            protocol: TCP
+          readinessProbe:
+            exec:
+              command:
+              - /bin/sh
+              - -c
+              - -e
+              - |
+                exec pg_isready -U "keycloak" -d "dbname=keycloak" -h 127.0.0.1 -p 5432
+                [ -f /opt/bitnami/postgresql/tmp/.initialized ] || [ -f /bitnami/postgresql/.initialized ]
+            failureThreshold: 6
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          resources:
+            limits:
+              cpu: "1"
+              memory: 1Gi
+            requests:
+              cpu: 250m
+              memory: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            privileged: false
+            readOnlyRootFilesystem: true
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seLinuxOptions: {}
+            seccompProfile:
+              type: RuntimeDefault
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /tmp
+            name: empty-dir
+            subPath: tmp-dir
+          - mountPath: /opt/bitnami/postgresql/conf
+            name: empty-dir
+            subPath: app-conf-dir
+          - mountPath: /opt/bitnami/postgresql/tmp
+            name: empty-dir
+            subPath: app-tmp-dir
+          - mountPath: /docker-entrypoint-initdb.d/secret
+            name: custom-init-scripts-secret
+          - mountPath: /opt/bitnami/postgresql/secrets/
+            name: postgresql-password
+          - mountPath: /dev/shm
+            name: dshm
+          - mountPath: /bitnami/postgresql
+            name: data
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext:
+          fsGroup: 1001
+          fsGroupChangePolicy: Always
+        serviceAccount: postgres-postgresql
+        serviceAccountName: postgres-postgresql
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - emptyDir: {}
+          name: empty-dir
+        - name: postgresql-password
+          secret:
+            defaultMode: 420
+            secretName: postgres-auth-secret
+        - name: custom-init-scripts-secret
+          secret:
+            defaultMode: 420
+            secretName: postgres-init-scripts
+        - emptyDir:
+            medium: Memory
+          name: dshm
+    updateStrategy:
+      rollingUpdate:
+        partition: 0
+      type: RollingUpdate
+    volumeClaimTemplates:
+    - apiVersion: v1
+      kind: PersistentVolumeClaim
+      metadata:
+        creationTimestamp: null
+        name: data
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 3Gi
+        storageClassName: local-path
+        volumeMode: Filesystem
+      status:
+        phase: Pending
+  status:
+    availableReplicas: 1
+    collisionCount: 0
+    currentReplicas: 1
+    currentRevision: postgres-postgresql-5bc6966c58
+    observedGeneration: 1
+    readyReplicas: 1
+    replicas: 1
+    updateRevision: postgres-postgresql-5bc6966c58
+    updatedReplicas: 1
+kind: List
+metadata:
+  resourceVersion: ""
