@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: scraper-envoy-config
-  namespace: map
+  namespace: lonctus
 data:
   envoy.yaml: |
     admin:

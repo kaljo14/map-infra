@@ -9,7 +9,7 @@ data:
       scrape_interval: 30s
       evaluation_interval: 30s
       external_labels:
-        cluster: mustaci-prod
+        cluster: lonctus-prod
 
     remote_write:
       - url: http://victoriametrics.monitoring.svc.cluster.local:8428/api/v1/write
@@ -25,7 +25,7 @@ data:
         kubernetes_sd_configs:
           - role: pod
             namespaces:
-              names: [map]
+              names: [lonctus]
         relabel_configs:
           - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
             action: keep
@@ -91,8 +91,8 @@ data:
           module: [http_2xx_ssl]
         static_configs:
           - targets:
-              - https://mustaci.com
-              - https://grafana.mustaci.com
+              - https://lonctus.com
+              - https://grafana.lonctus.com
               - https://clerk.lonctus.com/.well-known/jwks.json
         relabel_configs:
           - source_labels: [__address__]
@@ -109,8 +109,8 @@ data:
           module: [http_4xx_ok]
         static_configs:
           - targets:
-              - https://tiles.mustaci.com
-              - https://places-scraper.mustaci.com
+              - https://tiles.lonctus.com
+              - https://places-scraper.lonctus.com
         relabel_configs:
           - source_labels: [__address__]
             target_label: __param_target

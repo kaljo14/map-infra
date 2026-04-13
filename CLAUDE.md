@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-Kubernetes infrastructure-as-code for **mustaci.com** — a barbershop mapping application. Three services (frontend, tileserver, places-scraper) managed via Kustomize, with Envoy sidecar proxies providing JWT authentication (via Clerk) and RBAC.
+Kubernetes infrastructure-as-code for **lonctus.com** — a barbershop mapping application. Three services (frontend, tileserver, places-scraper) managed via Kustomize, with Envoy sidecar proxies providing JWT authentication (via Clerk) and RBAC.
 
 ## Commands
 
@@ -31,7 +31,7 @@ kubectl logs <pod-name> -n map -c envoy
 
 **Get a Clerk token for testing:**
 ```bash
-# Sign in at mustaci.com, open browser devtools console, and run:
+# Sign in at lonctus.com, open browser devtools console, and run:
 TOKEN=$(await window.Clerk.session.getToken())
 # Or copy the Authorization header from any authenticated network request
 ```
@@ -52,9 +52,9 @@ All protected services expose only the Envoy port externally; app containers bin
 
 | Service | Domain | App Port | Roles |
 |---------|--------|----------|-------|
-| Frontend | mustaci.com | 80 | Public (no Envoy) |
-| Tileserver | tiles.mustaci.com | 8080 | `map-viewer`, `admin` |
-| Places Scraper | places-scraper.mustaci.com | 3000 | `data-viewer` (GET), `data-editor` (POST/PUT/DELETE), `admin` |
+| Frontend | lonctus.com | 80 | Public (no Envoy) |
+| Tileserver | tiles.lonctus.com | 8080 | `map-viewer`, `admin` |
+| Places Scraper | places-scraper.lonctus.com | 3000 | `data-viewer` (GET), `data-editor` (POST/PUT/DELETE), `admin` |
 
 ### Authentication Flow
 

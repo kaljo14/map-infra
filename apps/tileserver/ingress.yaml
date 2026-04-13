@@ -2,17 +2,17 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: tileserver-ingress
-  namespace: map
+  namespace: lonctus
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
 spec:
   ingressClassName: traefik
   tls:
   - hosts:
-    - tiles.mustaci.com
+    - tiles.lonctus.com
     secretName: tiles-tls
   rules:
-  - host: tiles.mustaci.com
+  - host: tiles.lonctus.com
     http:
       paths:
       - path: /

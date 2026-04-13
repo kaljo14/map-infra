@@ -53,7 +53,7 @@ You should see 2/2 containers running for each service (Envoy + app).
 
 #### Get a Clerk Token
 
-Sign in at mustaci.com, open browser devtools, and run:
+Sign in at lonctus.com, open browser devtools, and run:
 ```javascript
 await window.Clerk.session.getToken()
 ```
@@ -61,14 +61,14 @@ await window.Clerk.session.getToken()
 #### Test Without Token (Should Fail)
 
 ```bash
-curl -v https://martin.mustaci.com/
+curl -v https://martin.lonctus.com/
 # Expected: 401 Unauthorized
 ```
 
 #### Test With Valid Token (Should Succeed)
 
 ```bash
-curl -v -H "Authorization: Bearer $TOKEN" https://martin.mustaci.com/
+curl -v -H "Authorization: Bearer $TOKEN" https://martin.lonctus.com/
 # Expected: 200 OK
 ```
 

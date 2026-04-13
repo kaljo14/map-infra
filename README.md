@@ -5,10 +5,10 @@ Production-ready Kubernetes setup for deploying applications with Envoy sidecar 
 ## Services
 
 This repository includes configurations for:
-1. **Tileserver** - Serves vector tiles at `tiles.mustaci.com`
-2. **Places Scraper** - API for places data at `places-scraper.mustaci.com`
-3. **Martin** - Vector tile server at `martin.mustaci.com`
-4. **Frontend** - Main application at `mustaci.com`
+1. **Tileserver** - Serves vector tiles at `tiles.lonctus.com`
+2. **Places Scraper** - API for places data at `places-scraper.lonctus.com`
+3. **Martin** - Vector tile server at `martin.lonctus.com`
+4. **Frontend** - Main application at `lonctus.com`
 
 ## Architecture
 

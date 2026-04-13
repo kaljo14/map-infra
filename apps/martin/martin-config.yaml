@@ -2,11 +2,11 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: martin-config
-  namespace: map
+  namespace: lonctus
 data:
   martin-config.yaml: |
     # Martin tile sources derived from the live catalog.
-    # Tile endpoint pattern: https://martin.mustaci.com/{table}/{z}/{x}/{y}
+    # Tile endpoint pattern: https://martin.lonctus.com/{table}/{z}/{x}/{y}
 
     tables:
       places:

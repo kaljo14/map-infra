@@ -11,7 +11,7 @@ spec:
     path: .
   destination:
     server: https://kubernetes.default.svc
-    namespace: map
+    namespace: lonctus
   syncPolicy:
     automated:
       prune: true # removes resources deleted from git

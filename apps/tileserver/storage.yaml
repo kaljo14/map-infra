@@ -2,7 +2,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: tiles-pvc
-  namespace: map
+  namespace: lonctus
 spec:
   accessModes:
     - ReadWriteOnce

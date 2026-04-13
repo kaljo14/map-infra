@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: martin
-  namespace: map
+  namespace: lonctus
   labels:
     app: martin
 spec:

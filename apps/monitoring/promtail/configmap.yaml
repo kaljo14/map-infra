@@ -47,4 +47,4 @@ data:
             replacement: /var/log/pods/*$1/*.log
           - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_pod_container_name]
             action: keep
-            regex: map;envoy
+            regex: lonctus;envoy
