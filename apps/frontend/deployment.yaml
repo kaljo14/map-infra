@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: kaljo14/my-map@sha256:6b5876b70c11f975734b4618efe09a80388e420cfc073fef7182b8a00c749891
+          image: kaljo14/my-map@sha256:12850bcdb4e8e8f41a72bca297204a37e1029245c67d49c22717ed373948d691
           env:
             - name: ENABLE_AUTH
               value: "true"
@@ -25,8 +25,6 @@ spec:
               value: "http://places-scraper"
             - name: TILES_API_URL
               value: "http://tileserver"
-            - name: VITE_CLERK_PUBLISHABLE_KEY
-              value: "pk_live_XXXXX"
             - name: MARTIN_API_URL
               value: "http://martin"
           ports:
