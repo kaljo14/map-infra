@@ -54,14 +54,12 @@ data:
                 typed_config:
                   "@type": type.googleapis.com/envoy.extensions.filters.http.jwt_authn.v3.JwtAuthentication
                   providers:
-                    keycloak:
-                      issuer: "https://keycloak.mustaci.com/realms/barbershop-realm"
-                      audiences:
-                      - "barbershop-app"
+                    clerk:
+                      issuer: "https://clerk.lonctus.com"
                       remote_jwks:
                         http_uri:
-                          uri: "http://keycloak.database.svc.cluster.local/realms/barbershop-realm/protocol/openid-connect/certs"
-                          cluster: keycloak_cluster
+                          uri: "https://clerk.lonctus.com/.well-known/jwks.json"
+                          cluster: clerk_jwks_cluster
                           timeout: 5s
                         cache_duration:
                           seconds: 300
@@ -74,7 +72,7 @@ data:
                   - match:
                       prefix: "/"
                     requires:
-                      provider_name: "keycloak"
+                      provider_name: "clerk"
 
               - name: envoy.filters.http.rbac
                 typed_config:
@@ -90,24 +88,18 @@ data:
                               filter: envoy.filters.http.jwt_authn
                               path:
                                 - key: jwt_payload
-                                - key: realm_access
-                                - key: roles
+                                - key: role
                               value:
-                                list_match:
-                                  one_of:
-                                    string_match:
-                                      exact: "map-viewer"
+                                string_match:
+                                  exact: "map-viewer"
                           - metadata:
                               filter: envoy.filters.http.jwt_authn
                               path:
                                 - key: jwt_payload
-                                - key: realm_access
-                                - key: roles
+                                - key: role
                               value:
-                                list_match:
-                                  one_of:
-                                    string_match:
-                                      exact: "admin"
+                                string_match:
+                                  exact: "admin"
 
               - name: envoy.filters.http.router
                 typed_config:
@@ -128,16 +120,21 @@ data:
                     address: 127.0.0.1
                     port_value: 3000
 
-      - name: keycloak_cluster
+      - name: clerk_jwks_cluster
         connect_timeout: 5s
-        type: STRICT_DNS
+        type: LOGICAL_DNS
         lb_policy: ROUND_ROBIN
         load_assignment:
-          cluster_name: keycloak_cluster
+          cluster_name: clerk_jwks_cluster
           endpoints:
           - lb_endpoints:
             - endpoint:
                 address:
                   socket_address:
-                    address: keycloak.database.svc.cluster.local
-                    port_value: 80
+                    address: clerk.lonctus.com
+                    port_value: 443
+        transport_socket:
+          name: envoy.transport_sockets.tls
+          typed_config:
+            "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext
+            sni: clerk.lonctus.com

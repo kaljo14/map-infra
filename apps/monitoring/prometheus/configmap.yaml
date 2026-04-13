@@ -93,7 +93,7 @@ data:
           - targets:
               - https://mustaci.com
               - https://grafana.mustaci.com
-              - https://keycloak.mustaci.com/realms/barbershop-realm/.well-known/openid-configuration
+              - https://clerk.lonctus.com/.well-known/jwks.json
         relabel_configs:
           - source_labels: [__address__]
             target_label: __param_target

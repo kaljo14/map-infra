@@ -1,18 +1,19 @@
-# Envoy + Keycloak Authentication Setup for K3s
+# Envoy + Clerk Authentication Setup for K3s
 
-Production-ready Kubernetes setup for deploying applications with Envoy sidecar authentication using Keycloak.
+Production-ready Kubernetes setup for deploying applications with Envoy sidecar authentication using Clerk.
 
 ## Services
 
 This repository includes configurations for:
 1. **Tileserver** - Serves vector tiles at `tiles.mustaci.com`
 2. **Places Scraper** - API for places data at `places-scraper.mustaci.com`
-3. **Frontend** - Main application at `mustaci.com`
+3. **Martin** - Vector tile server at `martin.mustaci.com`
+4. **Frontend** - Main application at `mustaci.com`
 
 ## Architecture
 
 ```
-User Request 
+User Request
   ↓
 [ Traefik Ingress (TLS) ]
   ↓
@@ -20,7 +21,7 @@ User Request
   ↓
 [ Pod ]
   ├── Envoy Sidecar (Port 8000) ← EXPOSED
-  │    ├── JWT Auth (Keycloak)
+  │    ├── JWT Auth (Clerk)
   │    ├── RBAC (Role Check)
   │    └── Router
   │
@@ -29,14 +30,16 @@ User Request
 
 ## Configuration
 
-- **Keycloak Domain**: `keycloack.mustaci.com`
-- **Realm**: `barbershop-realm`
-- **Client**: `barbershop-app`
+- **Clerk Domain**: `clerk.lonctus.com`
+- **JWKS Endpoint**: `https://clerk.lonctus.com/.well-known/jwks.json`
+- **Roles**: Set via Clerk `publicMetadata.role` and exposed as `role` claim in JWT template
 
 ## Quick Start
 
-### 1. Configure Keycloak
-Follow [keycloak/roles-setup.md](keycloak/roles-setup.md) and [keycloak/client-config.md](keycloak/client-config.md).
+### 1. Configure Clerk
+
+1. Create a JWT Template in Clerk Dashboard that exposes `user.publicMetadata.role` as a `role` claim
+2. Set `publicMetadata.role` on users (`map-viewer`, `admin`, `data-viewer`, `data-editor`)
 
 ### 2. Deploy
 
@@ -49,17 +52,21 @@ kubectl apply -k .
 ```
 .
 ├── apps/
+│   ├── frontend/
+│   │   ├── deployment.yaml
+│   │   └── ingress.yaml
 │   ├── tileserver/
 │   │   ├── envoy-config.yaml
 │   │   ├── deployment.yaml
 │   │   └── ingress.yaml
-│   └── places-scraper/
+│   ├── places-scraper/
+│   │   ├── envoy-config.yaml
+│   │   ├── deployment.yaml
+│   │   └── ingress.yaml
+│   └── martin/
 │       ├── envoy-config.yaml
 │       ├── deployment.yaml
 │       └── ingress.yaml
-├── keycloak/
-│   ├── client-config.md
-│   └── roles-setup.md
 ├── kustomization.yaml
 └── README.md
 ```

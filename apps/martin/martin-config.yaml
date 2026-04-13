@@ -78,3 +78,96 @@ data:
         minzoom: 0
         maxzoom: 22
         id_column: id
+
+      # Accessibility & Transport tile views (SofiaPlan datasets 96, 279, 289, 282, 268, 333, 223, 472, 254, 602)
+      sofiaplan_transit_access_ge_tiles:
+        schema: public
+        geometry_column: geom
+        minzoom: 0
+        maxzoom: 22
+        id_column: id
+
+      sofiaplan_transit_access_district_tiles:
+        schema: public
+        geometry_column: geom
+        minzoom: 0
+        maxzoom: 22
+        id_column: id
+
+      sofiaplan_metro_access_800m_tiles:
+        schema: public
+        geometry_column: geom
+        minzoom: 0
+        maxzoom: 22
+        id_column: id
+
+      sofiaplan_metro_access_1200m_tiles:
+        schema: public
+        geometry_column: geom
+        minzoom: 0
+        maxzoom: 22
+        id_column: id
+
+      sofiaplan_bus_lines_tiles:
+        schema: public
+        geometry_column: geom
+        minzoom: 0
+        maxzoom: 22
+        id_column: id
+
+      sofiaplan_bus_lines_alt_tiles:
+        schema: public
+        geometry_column: geom
+        minzoom: 0
+        maxzoom: 22
+        id_column: id
+
+      sofiaplan_trolleybus_lines_tiles:
+        schema: public
+        geometry_column: geom
+        minzoom: 0
+        maxzoom: 22
+        id_column: id
+
+      sofiaplan_tram_lines_tiles:
+        schema: public
+        geometry_column: geom
+        minzoom: 0
+        maxzoom: 22
+        id_column: id
+
+      sofiaplan_tram_lines_alt_tiles:
+        schema: public
+        geometry_column: geom
+        minzoom: 0
+        maxzoom: 22
+        id_column: id
+
+      sofiaplan_railway_stations_tiles:
+        schema: public
+        geometry_column: geom
+        minzoom: 0
+        maxzoom: 22
+        id_column: id
+
+      parking_zones_tiles:
+        schema: public
+        geometry_column: geom
+        minzoom: 0
+        maxzoom: 22
+        id_column: id
+
+      # Health service datasets (SofiaPlan datasets 597, 598)
+      sofiaplan_health_service_concentration_tiles:
+        schema: public
+        geometry_column: geom
+        minzoom: 0
+        maxzoom: 22
+        id_column: id
+
+      sofiaplan_health_infrastructure_concentration_tiles:
+        schema: public
+        geometry_column: geom
+        minzoom: 0
+        maxzoom: 22
+        id_column: id

@@ -2,6 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: scraper-envoy-config
+  namespace: map
 data:
   envoy.yaml: |
     admin:
@@ -9,7 +10,7 @@ data:
         socket_address:
           address: 0.0.0.0
           port_value: 9901
-    
+
     static_resources:
       listeners:
       - name: listener_0
@@ -24,7 +25,7 @@ data:
               "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
               stat_prefix: ingress_http
               codec_type: AUTO
-              
+
               access_log:
               - name: envoy.access_loggers.stdout
                 typed_config:
@@ -47,22 +48,19 @@ data:
                       prefix: "/"
                     route:
                       cluster: local_service
-              
+
               http_filters:
-              # JWT Authentication
+              # JWT Authentication (Clerk)
               - name: envoy.filters.http.jwt_authn
                 typed_config:
                   "@type": type.googleapis.com/envoy.extensions.filters.http.jwt_authn.v3.JwtAuthentication
                   providers:
-                    keycloak:
-                      issuer: "https://keycloak.mustaci.com/realms/barbershop-realm"
-                      audiences:
-                      - "barbershop-app"
-                      - "account"
+                    clerk:
+                      issuer: "https://clerk.lonctus.com"
                       remote_jwks:
                         http_uri:
-                          uri: "http://keycloak.database.svc.cluster.local/realms/barbershop-realm/protocol/openid-connect/certs"
-                          cluster: keycloak_cluster
+                          uri: "https://clerk.lonctus.com/.well-known/jwks.json"
+                          cluster: clerk_jwks_cluster
                           timeout: 5s
                         cache_duration:
                           seconds: 300
@@ -75,9 +73,9 @@ data:
                   - match:
                       prefix: "/"
                     requires:
-                      provider_name: "keycloak"
+                      provider_name: "clerk"
 
-              # RBAC
+              # RBAC (disabled — enable with Clerk jwt_payload.role claim)
               # - name: envoy.filters.http.rbac
               #   typed_config:
               #     "@type": type.googleapis.com/envoy.extensions.filters.http.rbac.v3.RBAC
@@ -95,49 +93,18 @@ data:
               #                 filter: envoy.filters.http.jwt_authn
               #                 path:
               #                   - key: jwt_payload
-              #                   - key: realm_access
-              #                   - key: roles
+              #                   - key: role
               #                 value:
-              #                   list_match:
-              #                     one_of:
-              #                       string_match:
-              #                         exact: "data-viewer"
+              #                   string_match:
+              #                     exact: "data-viewer"
               #             - metadata:
               #                 filter: envoy.filters.http.jwt_authn
               #                 path:
               #                   - key: jwt_payload
-              #                   - key: resource_access
-              #                   - key: barbershop-app
-              #                   - key: roles
+              #                   - key: role
               #                 value:
-              #                   list_match:
-              #                     one_of:
-              #                       string_match:
-              #                         exact: "data-viewer"
-              #             - metadata:
-              #                 filter: envoy.filters.http.jwt_authn
-              #                 path:
-              #                   - key: jwt_payload
-              #                   - key: realm_access
-              #                   - key: roles
-              #                 value:
-              #                   list_match:
-              #                     one_of:
-              #                       string_match:
-              #                         exact: "admin"
-              #             - metadata:
-              #                 filter: envoy.filters.http.jwt_authn
-              #                 path:
-              #                   - key: jwt_payload
-              #                   - key: resource_access
-              #                   - key: barbershop-app
-              #                   - key: roles
-              #                 value:
-              #                   list_match:
-              #                     one_of:
-              #                       string_match:
-              #                         exact: "admin"
-              #         
+              #                   string_match:
+              #                     exact: "admin"
               #         "write-access":
               #           permissions:
               #             - header:
@@ -157,53 +124,23 @@ data:
               #                 filter: envoy.filters.http.jwt_authn
               #                 path:
               #                   - key: jwt_payload
-              #                   - key: realm_access
-              #                   - key: roles
+              #                   - key: role
               #                 value:
-              #                   list_match:
-              #                     one_of:
-              #                       string_match:
-              #                         exact: "data-editor"
+              #                   string_match:
+              #                     exact: "data-editor"
               #             - metadata:
               #                 filter: envoy.filters.http.jwt_authn
               #                 path:
               #                   - key: jwt_payload
-              #                   - key: resource_access
-              #                   - key: barbershop-app
-              #                   - key: roles
+              #                   - key: role
               #                 value:
-              #                   list_match:
-              #                     one_of:
-              #                       string_match:
-              #                         exact: "data-editor"
-              #             - metadata:
-              #                 filter: envoy.filters.http.jwt_authn
-              #                 path:
-              #                   - key: jwt_payload
-              #                   - key: realm_access
-              #                   - key: roles
-              #                 value:
-              #                   list_match:
-              #                     one_of:
-              #                       string_match:
-              #                         exact: "admin"
-              #             - metadata:
-              #                 filter: envoy.filters.http.jwt_authn
-              #                 path:
-              #                   - key: jwt_payload
-              #                   - key: resource_access
-              #                   - key: barbershop-app
-              #                   - key: roles
-              #                 value:
-              #                   list_match:
-              #                     one_of:
-              #                       string_match:
-              #                         exact: "admin"
+              #                   string_match:
+              #                     exact: "admin"
 
               - name: envoy.filters.http.router
                 typed_config:
                   "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
-      
+
       clusters:
       - name: local_service
         connect_timeout: 5s
@@ -218,17 +155,22 @@ data:
                   socket_address:
                     address: 127.0.0.1
                     port_value: 8080
-      
-      - name: keycloak_cluster
+
+      - name: clerk_jwks_cluster
         connect_timeout: 5s
-        type: STRICT_DNS
+        type: LOGICAL_DNS
         lb_policy: ROUND_ROBIN
         load_assignment:
-          cluster_name: keycloak_cluster
+          cluster_name: clerk_jwks_cluster
           endpoints:
           - lb_endpoints:
             - endpoint:
                 address:
                   socket_address:
-                    address: keycloak.database.svc.cluster.local
-                    port_value: 80
+                    address: clerk.lonctus.com
+                    port_value: 443
+        transport_socket:
+          name: envoy.transport_sockets.tls
+          typed_config:
+            "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext
+            sni: clerk.lonctus.com

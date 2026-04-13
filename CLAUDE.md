@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-Kubernetes infrastructure-as-code for **mustaci.com** — a barbershop mapping application. Three services (frontend, tileserver, places-scraper) managed via Kustomize, with Envoy sidecar proxies providing JWT authentication (via Keycloak) and RBAC.
+Kubernetes infrastructure-as-code for **mustaci.com** — a barbershop mapping application. Three services (frontend, tileserver, places-scraper) managed via Kustomize, with Envoy sidecar proxies providing JWT authentication (via Clerk) and RBAC.
 
 ## Commands
 
@@ -29,14 +29,11 @@ kubectl get ingress -n map
 kubectl logs <pod-name> -n map -c envoy
 ```
 
-**Get a Keycloak token for testing:**
+**Get a Clerk token for testing:**
 ```bash
-TOKEN=$(curl -s -X POST 'https://keycloak.mustaci.com/realms/barbershop-realm/protocol/openid-connect/token' \
-  -H 'Content-Type: application/x-www-form-urlencoded' \
-  -d 'client_id=barbershop-app' \
-  -d 'username=USERNAME' \
-  -d 'password=PASSWORD' \
-  -d 'grant_type=password' | jq -r '.access_token')
+# Sign in at mustaci.com, open browser devtools console, and run:
+TOKEN=$(await window.Clerk.session.getToken())
+# Or copy the Authorization header from any authenticated network request
 ```
 
 ## Architecture
@@ -61,10 +58,11 @@ All protected services expose only the Envoy port externally; app containers bin
 
 ### Authentication Flow
 
-- Keycloak realm: `barbershop-realm`, client: `barbershop-app`
-- External issuer: `https://keycloak.mustaci.com/realms/barbershop-realm`
-- Internal JWKS fetch: `http://keycloak.default.svc.cluster.local/realms/barbershop-realm/protocol/openid-connect/certs`
+- Auth provider: Clerk (hosted at `https://clerk.lonctus.com`)
+- Issuer: `https://clerk.lonctus.com`
+- JWKS endpoint: `https://clerk.lonctus.com/.well-known/jwks.json`
 - JWKS cache TTL: 300s
+- Roles via Clerk `publicMetadata.role` custom claim in JWT template
 
 ## Repository Layout
 
@@ -84,9 +82,6 @@ apps/
     deployment.yaml
     envoy-config.yaml
     ingress.yaml
-keycloak/
-  roles-setup.md            # How to configure Keycloak roles
-  client-config.md          # How to configure the OAuth2 client
 DEPLOYMENT.md               # Full deployment guide and troubleshooting
 ```
 
