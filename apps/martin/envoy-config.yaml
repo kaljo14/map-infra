@@ -74,32 +74,33 @@ data:
                     requires:
                       provider_name: "clerk"
 
-              - name: envoy.filters.http.rbac
-                typed_config:
-                  "@type": type.googleapis.com/envoy.extensions.filters.http.rbac.v3.RBAC
-                  rules:
-                    action: ALLOW
-                    policies:
-                      "map-access":
-                        permissions:
-                          - any: true
-                        principals:
-                          - metadata:
-                              filter: envoy.filters.http.jwt_authn
-                              path:
-                                - key: jwt_payload
-                                - key: role
-                              value:
-                                string_match:
-                                  exact: "map-viewer"
-                          - metadata:
-                              filter: envoy.filters.http.jwt_authn
-                              path:
-                                - key: jwt_payload
-                                - key: role
-                              value:
-                                string_match:
-                                  exact: "admin"
+              # RBAC disabled — enable after adding role claim to Clerk JWT template
+              # - name: envoy.filters.http.rbac
+              #   typed_config:
+              #     "@type": type.googleapis.com/envoy.extensions.filters.http.rbac.v3.RBAC
+              #     rules:
+              #       action: ALLOW
+              #       policies:
+              #         "map-access":
+              #           permissions:
+              #             - any: true
+              #           principals:
+              #             - metadata:
+              #                 filter: envoy.filters.http.jwt_authn
+              #                 path:
+              #                   - key: jwt_payload
+              #                   - key: role
+              #                 value:
+              #                   string_match:
+              #                     exact: "map-viewer"
+              #             - metadata:
+              #                 filter: envoy.filters.http.jwt_authn
+              #                 path:
+              #                   - key: jwt_payload
+              #                   - key: role
+              #                 value:
+              #                   string_match:
+              #                     exact: "admin"
 
               - name: envoy.filters.http.router
                 typed_config:
