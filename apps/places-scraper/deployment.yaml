@@ -23,6 +23,7 @@ spec:
         # Envoy Sidecar (Exposed)
         - name: envoy
           image: envoyproxy/envoy:v1.29-latest
+          args: ["-c", "/etc/envoy/envoy.yaml", "--log-level", "debug"]
           ports:
             - name: http
               containerPort: 8000 # Exposed port
