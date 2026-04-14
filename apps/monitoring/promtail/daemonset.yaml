@@ -32,6 +32,19 @@ spec:
               readOnly: true
             - name: positions
               mountPath: /tmp
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 9080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /ready
+              port: 9080
+            initialDelaySeconds: 15
+            periodSeconds: 15
+            failureThreshold: 3
           resources:
             requests:
               cpu: 50m

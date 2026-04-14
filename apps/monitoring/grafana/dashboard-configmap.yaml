@@ -329,3 +329,647 @@ data:
       "title": "Raspberry Pi Overview",
       "uid": "rpi-overview"
     }
+  envoy-access-logs.json: |
+    {
+      "annotations": { "list": [] },
+      "editable": true,
+      "fiscalYearStartMonth": 0,
+      "graphTooltip": 1,
+      "links": [],
+      "panels": [
+        {
+          "title": "Total Requests / sec",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 8, "x": 0, "y": 0 },
+          "datasource": { "type": "loki", "uid": "" },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "reqps",
+              "custom": { "fillOpacity": 20, "lineWidth": 2 }
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum(count_over_time({namespace=\"lonctus\"} [1m])) / 60",
+              "legendFormat": "req/s"
+            }
+          ]
+        },
+        {
+          "title": "Error Rate (4xx + 5xx)",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 8, "x": 8, "y": 0 },
+          "datasource": { "type": "loki", "uid": "" },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "custom": { "fillOpacity": 20, "lineWidth": 2 },
+              "color": { "mode": "fixed", "fixedColor": "red" }
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum(count_over_time({namespace=\"lonctus\", response_code=~\"[45]..\"} [1m]))",
+              "legendFormat": "errors/min"
+            }
+          ]
+        },
+        {
+          "title": "Requests by Service",
+          "type": "piechart",
+          "gridPos": { "h": 8, "w": 8, "x": 16, "y": 0 },
+          "datasource": { "type": "loki", "uid": "" },
+          "targets": [
+            {
+              "expr": "sum by (app) (count_over_time({namespace=\"lonctus\"} [$__range]))",
+              "legendFormat": "{{app}}"
+            }
+          ]
+        },
+        {
+          "title": "Requests by Status Code",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+          "datasource": { "type": "loki", "uid": "" },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "custom": { "fillOpacity": 15, "lineWidth": 2, "stacking": { "mode": "normal" } }
+            },
+            "overrides": [
+              {
+                "matcher": { "id": "byRegexp", "options": "2.." },
+                "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "green" } }]
+              },
+              {
+                "matcher": { "id": "byRegexp", "options": "3.." },
+                "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "blue" } }]
+              },
+              {
+                "matcher": { "id": "byRegexp", "options": "4.." },
+                "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "yellow" } }]
+              },
+              {
+                "matcher": { "id": "byRegexp", "options": "5.." },
+                "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } }]
+              }
+            ]
+          },
+          "targets": [
+            {
+              "expr": "sum by (response_code) (count_over_time({namespace=\"lonctus\"} [1m]))",
+              "legendFormat": "{{response_code}}"
+            }
+          ]
+        },
+        {
+          "title": "Requests by HTTP Method",
+          "type": "bargauge",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+          "datasource": { "type": "loki", "uid": "" },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "blue", "value": null }
+                ]
+              }
+            }
+          },
+          "options": {
+            "orientation": "horizontal",
+            "displayMode": "gradient",
+            "reduceOptions": { "calcs": ["lastNotNull"] }
+          },
+          "targets": [
+            {
+              "expr": "sum by (method) (count_over_time({namespace=\"lonctus\"} [$__range]))",
+              "legendFormat": "{{method}}"
+            }
+          ]
+        },
+        {
+          "title": "5xx Errors by Service",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
+          "datasource": { "type": "loki", "uid": "" },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "custom": { "fillOpacity": 20, "lineWidth": 2 },
+              "color": { "mode": "palette-classic" }
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum by (app) (count_over_time({namespace=\"lonctus\", response_code=~\"5..\"} [1m]))",
+              "legendFormat": "{{app}}"
+            }
+          ]
+        },
+        {
+          "title": "4xx Errors by Service",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
+          "datasource": { "type": "loki", "uid": "" },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "custom": { "fillOpacity": 20, "lineWidth": 2 },
+              "color": { "mode": "palette-classic" }
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum by (app) (count_over_time({namespace=\"lonctus\", response_code=~\"4..\"} [1m]))",
+              "legendFormat": "{{app}}"
+            }
+          ]
+        },
+        {
+          "title": "Places API — Status Codes",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 8, "x": 0, "y": 24 },
+          "datasource": { "type": "loki", "uid": "" },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "custom": { "fillOpacity": 15, "lineWidth": 2 }
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum by (response_code) (count_over_time({app=\"places-scraper\"} [1m]))",
+              "legendFormat": "{{response_code}}"
+            }
+          ]
+        },
+        {
+          "title": "Tileserver — Status Codes",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 8, "x": 8, "y": 24 },
+          "datasource": { "type": "loki", "uid": "" },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "custom": { "fillOpacity": 15, "lineWidth": 2 }
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum by (response_code) (count_over_time({app=\"tileserver\"} [1m]))",
+              "legendFormat": "{{response_code}}"
+            }
+          ]
+        },
+        {
+          "title": "Martin — Status Codes",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 8, "x": 16, "y": 24 },
+          "datasource": { "type": "loki", "uid": "" },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "custom": { "fillOpacity": 15, "lineWidth": 2 }
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum by (response_code) (count_over_time({app=\"martin\"} [1m]))",
+              "legendFormat": "{{response_code}}"
+            }
+          ]
+        },
+        {
+          "title": "Top Users by Request Count",
+          "type": "table",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 32 },
+          "datasource": { "type": "loki", "uid": "" },
+          "targets": [
+            {
+              "expr": "topk(10, sum by (user) (count_over_time({namespace=\"lonctus\", user!=\"\"} [$__range])))",
+              "format": "table",
+              "instant": true
+            }
+          ],
+          "transformations": [
+            { "id": "organize", "options": { "excludeByName": { "Time": true }, "renameByName": { "user": "User", "Value": "Requests" } } }
+          ]
+        },
+        {
+          "title": "Live Error Logs",
+          "type": "logs",
+          "gridPos": { "h": 10, "w": 12, "x": 12, "y": 32 },
+          "datasource": { "type": "loki", "uid": "" },
+          "options": {
+            "showTime": true,
+            "showLabels": true,
+            "showCommonLabels": false,
+            "wrapLogMessage": true,
+            "prettifyLogMessage": false,
+            "enableLogDetails": true,
+            "sortOrder": "Descending",
+            "dedupStrategy": "none"
+          },
+          "targets": [
+            {
+              "expr": "{namespace=\"lonctus\", response_code=~\"[45]..\"}"
+            }
+          ]
+        },
+        {
+          "title": "Log Volume by Service",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 24, "x": 0, "y": 42 },
+          "datasource": { "type": "loki", "uid": "" },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "custom": { "fillOpacity": 30, "lineWidth": 1, "stacking": { "mode": "normal" } }
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum by (app) (count_over_time({namespace=\"lonctus\"} [1m]))",
+              "legendFormat": "{{app}}"
+            }
+          ]
+        }
+      ],
+      "refresh": "30s",
+      "schemaVersion": 39,
+      "tags": ["envoy", "loki", "access-logs"],
+      "templating": { "list": [] },
+      "time": { "from": "now-1h", "to": "now" },
+      "timepicker": {},
+      "timezone": "browser",
+      "title": "Envoy Access Logs",
+      "uid": "envoy-access-logs"
+    }
+  request-latency.json: |
+    {
+      "annotations": { "list": [] },
+      "editable": true,
+      "fiscalYearStartMonth": 0,
+      "graphTooltip": 2,
+      "links": [],
+      "panels": [
+        {
+          "title": "Overall Latency Percentiles (all services)",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 24, "x": 0, "y": 0 },
+          "datasource": { "type": "loki", "uid": "" },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ms",
+              "custom": { "fillOpacity": 10, "lineWidth": 2 }
+            },
+            "overrides": [
+              {
+                "matcher": { "id": "byName", "options": "p99" },
+                "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } }]
+              },
+              {
+                "matcher": { "id": "byName", "options": "p90" },
+                "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "orange" } }]
+              },
+              {
+                "matcher": { "id": "byName", "options": "p75" },
+                "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "yellow" } }]
+              },
+              {
+                "matcher": { "id": "byName", "options": "p50" },
+                "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "green" } }]
+              }
+            ]
+          },
+          "targets": [
+            {
+              "expr": "quantile_over_time(0.99, {namespace=\"lonctus\"} | json | unwrap duration [5m]) by ()",
+              "legendFormat": "p99",
+              "refId": "A"
+            },
+            {
+              "expr": "quantile_over_time(0.90, {namespace=\"lonctus\"} | json | unwrap duration [5m]) by ()",
+              "legendFormat": "p90",
+              "refId": "B"
+            },
+            {
+              "expr": "quantile_over_time(0.75, {namespace=\"lonctus\"} | json | unwrap duration [5m]) by ()",
+              "legendFormat": "p75",
+              "refId": "C"
+            },
+            {
+              "expr": "quantile_over_time(0.50, {namespace=\"lonctus\"} | json | unwrap duration [5m]) by ()",
+              "legendFormat": "p50",
+              "refId": "D"
+            }
+          ]
+        },
+        {
+          "title": "Places API — Latency Percentiles",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 8, "x": 0, "y": 8 },
+          "datasource": { "type": "loki", "uid": "" },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ms",
+              "custom": { "fillOpacity": 10, "lineWidth": 2 }
+            }
+          },
+          "targets": [
+            {
+              "expr": "quantile_over_time(0.99, {app=\"places-scraper\"} | json | unwrap duration [5m]) by ()",
+              "legendFormat": "p99",
+              "refId": "A"
+            },
+            {
+              "expr": "quantile_over_time(0.90, {app=\"places-scraper\"} | json | unwrap duration [5m]) by ()",
+              "legendFormat": "p90",
+              "refId": "B"
+            },
+            {
+              "expr": "quantile_over_time(0.50, {app=\"places-scraper\"} | json | unwrap duration [5m]) by ()",
+              "legendFormat": "p50",
+              "refId": "C"
+            }
+          ]
+        },
+        {
+          "title": "Tileserver — Latency Percentiles",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 8, "x": 8, "y": 8 },
+          "datasource": { "type": "loki", "uid": "" },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ms",
+              "custom": { "fillOpacity": 10, "lineWidth": 2 }
+            }
+          },
+          "targets": [
+            {
+              "expr": "quantile_over_time(0.99, {app=\"tileserver\"} | json | unwrap duration [5m]) by ()",
+              "legendFormat": "p99",
+              "refId": "A"
+            },
+            {
+              "expr": "quantile_over_time(0.90, {app=\"tileserver\"} | json | unwrap duration [5m]) by ()",
+              "legendFormat": "p90",
+              "refId": "B"
+            },
+            {
+              "expr": "quantile_over_time(0.50, {app=\"tileserver\"} | json | unwrap duration [5m]) by ()",
+              "legendFormat": "p50",
+              "refId": "C"
+            }
+          ]
+        },
+        {
+          "title": "Martin — Latency Percentiles",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 8, "x": 16, "y": 8 },
+          "datasource": { "type": "loki", "uid": "" },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ms",
+              "custom": { "fillOpacity": 10, "lineWidth": 2 }
+            }
+          },
+          "targets": [
+            {
+              "expr": "quantile_over_time(0.99, {app=\"martin\"} | json | unwrap duration [5m]) by ()",
+              "legendFormat": "p99",
+              "refId": "A"
+            },
+            {
+              "expr": "quantile_over_time(0.90, {app=\"martin\"} | json | unwrap duration [5m]) by ()",
+              "legendFormat": "p90",
+              "refId": "B"
+            },
+            {
+              "expr": "quantile_over_time(0.50, {app=\"martin\"} | json | unwrap duration [5m]) by ()",
+              "legendFormat": "p50",
+              "refId": "C"
+            }
+          ]
+        },
+        {
+          "title": "p99 Latency per User",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
+          "datasource": { "type": "loki", "uid": "" },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ms",
+              "custom": { "fillOpacity": 10, "lineWidth": 2 }
+            }
+          },
+          "targets": [
+            {
+              "expr": "quantile_over_time(0.99, {namespace=\"lonctus\", user!=\"\"} | json | unwrap duration [5m]) by (user)",
+              "legendFormat": "{{user}}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "title": "p50 Latency per User",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
+          "datasource": { "type": "loki", "uid": "" },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ms",
+              "custom": { "fillOpacity": 10, "lineWidth": 2 }
+            }
+          },
+          "targets": [
+            {
+              "expr": "quantile_over_time(0.50, {namespace=\"lonctus\", user!=\"\"} | json | unwrap duration [5m]) by (user)",
+              "legendFormat": "{{user}}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "title": "Slowest Users — Average Latency",
+          "type": "table",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 24 },
+          "datasource": { "type": "loki", "uid": "" },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ms",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "green", "value": null },
+                  { "color": "yellow", "value": 200 },
+                  { "color": "red", "value": 1000 }
+                ]
+              },
+              "custom": { "displayMode": "color-background" }
+            }
+          },
+          "targets": [
+            {
+              "expr": "topk(10, avg_over_time({namespace=\"lonctus\", user!=\"\"} | json | unwrap duration [$__range]) by (user))",
+              "format": "table",
+              "instant": true,
+              "refId": "A"
+            }
+          ],
+          "transformations": [
+            { "id": "organize", "options": { "excludeByName": { "Time": true }, "renameByName": { "user": "User", "Value": "Avg Latency (ms)" } } }
+          ]
+        },
+        {
+          "title": "Slowest Requests — p99 per Service + Method",
+          "type": "table",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 24 },
+          "datasource": { "type": "loki", "uid": "" },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ms",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "green", "value": null },
+                  { "color": "yellow", "value": 200 },
+                  { "color": "red", "value": 1000 }
+                ]
+              },
+              "custom": { "displayMode": "color-background" }
+            }
+          },
+          "targets": [
+            {
+              "expr": "topk(10, quantile_over_time(0.99, {namespace=\"lonctus\"} | json | unwrap duration [$__range]) by (app, method))",
+              "format": "table",
+              "instant": true,
+              "refId": "A"
+            }
+          ],
+          "transformations": [
+            { "id": "organize", "options": { "excludeByName": { "Time": true }, "renameByName": { "app": "Service", "method": "Method", "Value": "p99 Latency (ms)" } } }
+          ]
+        },
+        {
+          "title": "Latency vs Response Code",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 32 },
+          "datasource": { "type": "loki", "uid": "" },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ms",
+              "custom": { "fillOpacity": 10, "lineWidth": 2 }
+            }
+          },
+          "targets": [
+            {
+              "expr": "avg_over_time({namespace=\"lonctus\"} | json | unwrap duration [5m]) by (response_code)",
+              "legendFormat": "{{response_code}}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "title": "Response Size per Service (avg bytes)",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 32 },
+          "datasource": { "type": "loki", "uid": "" },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "bytes",
+              "custom": { "fillOpacity": 15, "lineWidth": 2 }
+            }
+          },
+          "targets": [
+            {
+              "expr": "avg_over_time({namespace=\"lonctus\"} | json | unwrap bytes_sent [5m]) by (app)",
+              "legendFormat": "{{app}}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "title": "Envoy Histogram — Downstream Request Time (VictoriaMetrics)",
+          "type": "timeseries",
+          "description": "Service-level latency from Envoy's built-in Prometheus histograms",
+          "gridPos": { "h": 8, "w": 24, "x": 0, "y": 40 },
+          "datasource": { "type": "prometheus", "uid": "" },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ms",
+              "custom": { "fillOpacity": 10, "lineWidth": 2 }
+            },
+            "overrides": [
+              {
+                "matcher": { "id": "byName", "options": "p99" },
+                "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } }]
+              },
+              {
+                "matcher": { "id": "byName", "options": "p90" },
+                "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "orange" } }]
+              },
+              {
+                "matcher": { "id": "byName", "options": "p50" },
+                "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "green" } }]
+              }
+            ]
+          },
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.99, sum(rate(envoy_http_downstream_rq_time_bucket[5m])) by (le))",
+              "legendFormat": "p99",
+              "refId": "A"
+            },
+            {
+              "expr": "histogram_quantile(0.90, sum(rate(envoy_http_downstream_rq_time_bucket[5m])) by (le))",
+              "legendFormat": "p90",
+              "refId": "B"
+            },
+            {
+              "expr": "histogram_quantile(0.50, sum(rate(envoy_http_downstream_rq_time_bucket[5m])) by (le))",
+              "legendFormat": "p50",
+              "refId": "C"
+            }
+          ]
+        },
+        {
+          "title": "Envoy Histogram — Latency per Service (VictoriaMetrics)",
+          "type": "timeseries",
+          "description": "p99 latency per service from Envoy's Prometheus histogram metrics",
+          "gridPos": { "h": 8, "w": 24, "x": 0, "y": 48 },
+          "datasource": { "type": "prometheus", "uid": "" },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ms",
+              "custom": { "fillOpacity": 10, "lineWidth": 2 }
+            }
+          },
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.99, sum(rate(envoy_http_downstream_rq_time_bucket[5m])) by (le, app))",
+              "legendFormat": "{{app}} p99",
+              "refId": "A"
+            },
+            {
+              "expr": "histogram_quantile(0.50, sum(rate(envoy_http_downstream_rq_time_bucket[5m])) by (le, app))",
+              "legendFormat": "{{app}} p50",
+              "refId": "B"
+            }
+          ]
+        }
+      ],
+      "refresh": "30s",
+      "schemaVersion": 39,
+      "tags": ["latency", "envoy", "performance"],
+      "templating": { "list": [] },
+      "time": { "from": "now-1h", "to": "now" },
+      "timepicker": {},
+      "timezone": "browser",
+      "title": "Request Latency & Percentiles",
+      "uid": "request-latency"
+    }

@@ -36,6 +36,9 @@ data:
                       method: "%REQ(:METHOD)%"
                       path: "%REQ(X-ENVOY-ORIGINAL-PATH?:PATH)%"
                       response_code: "%RESPONSE_CODE%"
+                      duration: "%DURATION%"
+                      bytes_sent: "%BYTES_SENT%"
+                      upstream_service_time: "%RESP(X-ENVOY-UPSTREAM-SERVICE-TIME)%"
                       user: "%DYNAMIC_METADATA(envoy.filters.http.jwt_authn:jwt_payload:sub)%"
 
               route_config:

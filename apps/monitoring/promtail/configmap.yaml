@@ -25,6 +25,8 @@ data:
                 method: method
                 path: path
                 response_code: response_code
+                duration: duration
+                bytes_sent: bytes_sent
                 user: user
           - labels:
               method:

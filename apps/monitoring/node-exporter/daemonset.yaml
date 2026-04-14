@@ -42,6 +42,19 @@ spec:
               mountPath: /host/root
               readOnly: true
               mountPropagation: HostToContainer
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 9100
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 9100
+            initialDelaySeconds: 10
+            periodSeconds: 15
+            failureThreshold: 3
           resources:
             requests:
               cpu: 50m
