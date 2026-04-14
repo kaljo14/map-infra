@@ -33,7 +33,8 @@ data:
             prefix: index_
             period: 24h
 
-    limits_config: {}
+    limits_config:
+      allow_structured_metadata: false
 
     storage_config:
       boltdb_shipper:
