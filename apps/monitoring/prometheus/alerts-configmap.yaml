@@ -134,13 +134,6 @@ data:
             annotations:
               summary: "Prometheus target {{ $labels.job }}/{{ $labels.instance }} is down"
 
-          - alert: VictoriaMetricsDown
-            expr: absent(up{job="victoriametrics"})
-            for: 2m
-            labels:
-              severity: critical
-            annotations:
-              summary: "VictoriaMetrics is not being scraped — metrics storage is down"
 
           - alert: HighPrometheusMemory
             expr: process_resident_memory_bytes{job="prometheus"} > 500 * 1024 * 1024
