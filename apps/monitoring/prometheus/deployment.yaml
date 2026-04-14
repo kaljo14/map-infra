@@ -45,17 +45,22 @@ spec:
               subPath: alerts.yml
             - name: data
               mountPath: /prometheus
+          startupProbe:
+            httpGet:
+              path: /-/ready
+              port: 9090
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            failureThreshold: 30
           readinessProbe:
             httpGet:
               path: /-/ready
               port: 9090
-            initialDelaySeconds: 10
             periodSeconds: 10
           livenessProbe:
             httpGet:
               path: /-/healthy
               port: 9090
-            initialDelaySeconds: 30
             periodSeconds: 15
             failureThreshold: 3
           resources:

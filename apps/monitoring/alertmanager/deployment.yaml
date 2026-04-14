@@ -15,23 +15,31 @@ spec:
       labels:
         app: alertmanager
     spec:
-      containers:
-        - name: alertmanager
-          image: prom/alertmanager:v0.27.0
-          args:
-            - --config.file=/etc/alertmanager/alertmanager.yml
-            - --storage.path=/alertmanager
-            - --config.expand-env
+      initContainers:
+        - name: envsubst
+          image: busybox
+          command: ['sh', '-c', 'cp /config-tmpl/alertmanager.yml /etc/alertmanager/alertmanager.yml && sed -i "s|\${SMTP_PASSWORD}|$SMTP_PASSWORD|g" /etc/alertmanager/alertmanager.yml']
           env:
             - name: SMTP_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: alertmanager-smtp
                   key: smtp-password
+          volumeMounts:
+            - name: config-tmpl
+              mountPath: /config-tmpl
+            - name: config-rendered
+              mountPath: /etc/alertmanager
+      containers:
+        - name: alertmanager
+          image: prom/alertmanager:v0.27.0
+          args:
+            - --config.file=/etc/alertmanager/alertmanager.yml
+            - --storage.path=/alertmanager
           ports:
             - containerPort: 9093
           volumeMounts:
-            - name: config
+            - name: config-rendered
               mountPath: /etc/alertmanager/alertmanager.yml
               subPath: alertmanager.yml
             - name: templates
@@ -64,12 +72,14 @@ spec:
               cpu: 100m
               memory: 64Mi
       volumes:
-        - name: config
+        - name: config-tmpl
           configMap:
             name: alertmanager-config
             items:
               - key: alertmanager.yml
                 path: alertmanager.yml
+        - name: config-rendered
+          emptyDir: {}
         - name: templates
           configMap:
             name: alertmanager-templates
