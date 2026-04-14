@@ -48,10 +48,14 @@ data:
 
       # Node Exporter (host-level CPU, memory, disk, network)
       - job_name: node-exporter
-        static_configs:
-          - targets: ['192.168.0.137:9100']
-            labels:
-              node: raspberrypi
+        kubernetes_sd_configs:
+          - role: node
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_node_address_InternalIP]
+            target_label: __address__
+            replacement: $1:9100
+          - source_labels: [__meta_kubernetes_node_name]
+            target_label: node
 
       # Kubernetes node metrics
       - job_name: kubernetes-nodes
