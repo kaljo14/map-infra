@@ -33,6 +33,16 @@ data:
               response_code:
               user:
         relabel_configs:
+          # Filter first — only keep envoy containers in lonctus namespace
+          - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_pod_container_name]
+            action: keep
+            regex: lonctus;envoy
+          # Set log file path: /var/log/pods/<namespace>_<pod-name>_<pod-uid>/<container>/*.log
+          - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_pod_name, __meta_kubernetes_pod_uid, __meta_kubernetes_pod_container_name]
+            target_label: __path__
+            separator: ;
+            regex: (.+);(.+);(.+);(.+)
+            replacement: /var/log/pods/${1}_${2}_${3}/${4}/*.log
           - source_labels: [__meta_kubernetes_pod_node_name]
             target_label: __host__
           - source_labels: [__meta_kubernetes_namespace]
@@ -43,10 +53,3 @@ data:
             target_label: app
           - source_labels: [__meta_kubernetes_pod_container_name]
             target_label: container
-          - source_labels: [__meta_kubernetes_pod_uid, __meta_kubernetes_pod_container_name]
-            target_label: __path__
-            separator: /
-            replacement: /var/log/pods/*$1/*.log
-          - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_pod_container_name]
-            action: keep
-            regex: lonctus;envoy
