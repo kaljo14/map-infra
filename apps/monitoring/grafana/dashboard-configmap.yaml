@@ -350,7 +350,7 @@ data:
           },
           "targets": [
             {
-              "expr": "sum(count_over_time({namespace=\"lonctus\"} [1m])) / 60",
+              "expr": "sum(count_over_time({job=\"envoy-logs\"} [1m])) / 60",
               "legendFormat": "req/s"
             }
           ]
@@ -369,7 +369,7 @@ data:
           },
           "targets": [
             {
-              "expr": "sum(count_over_time({namespace=\"lonctus\", response_code=~\"[45]..\"} [1m]))",
+              "expr": "sum(count_over_time({job=\"envoy-logs\", response_code=~\"[45]..\"} [1m]))",
               "legendFormat": "errors/min"
             }
           ]
@@ -381,7 +381,7 @@ data:
           "datasource": { "type": "loki", "uid": "" },
           "targets": [
             {
-              "expr": "sum by (app) (count_over_time({namespace=\"lonctus\"} [$__range]))",
+              "expr": "sum by (method) (count_over_time({job=\"envoy-logs\"} [$__range]))",
               "legendFormat": "{{app}}"
             }
           ]
@@ -417,7 +417,7 @@ data:
           },
           "targets": [
             {
-              "expr": "sum by (response_code) (count_over_time({namespace=\"lonctus\"} [1m]))",
+              "expr": "sum by (response_code) (count_over_time({job=\"envoy-logs\"} [1m]))",
               "legendFormat": "{{response_code}}"
             }
           ]
@@ -445,7 +445,7 @@ data:
           },
           "targets": [
             {
-              "expr": "sum by (method) (count_over_time({namespace=\"lonctus\"} [$__range]))",
+              "expr": "sum by (method) (count_over_time({job=\"envoy-logs\"} [$__range]))",
               "legendFormat": "{{method}}"
             }
           ]
@@ -464,7 +464,7 @@ data:
           },
           "targets": [
             {
-              "expr": "sum by (app) (count_over_time({namespace=\"lonctus\", response_code=~\"5..\"} [1m]))",
+              "expr": "sum by (response_code) (count_over_time({job=\"envoy-logs\", response_code=~\"5..\"} [1m]))",
               "legendFormat": "{{app}}"
             }
           ]
@@ -483,7 +483,7 @@ data:
           },
           "targets": [
             {
-              "expr": "sum by (app) (count_over_time({namespace=\"lonctus\", response_code=~\"4..\"} [1m]))",
+              "expr": "sum by (response_code) (count_over_time({job=\"envoy-logs\", response_code=~\"4..\"} [1m]))",
               "legendFormat": "{{app}}"
             }
           ]
@@ -501,7 +501,7 @@ data:
           },
           "targets": [
             {
-              "expr": "sum by (response_code) (count_over_time({app=\"places-scraper\"} [1m]))",
+              "expr": "sum by (response_code) (count_over_time({job=\"envoy-logs\"} |= \"places-scraper\" [1m]))",
               "legendFormat": "{{response_code}}"
             }
           ]
@@ -519,7 +519,7 @@ data:
           },
           "targets": [
             {
-              "expr": "sum by (response_code) (count_over_time({app=\"tileserver\"} [1m]))",
+              "expr": "sum by (response_code) (count_over_time({job=\"envoy-logs\"} |= \"tileserver\" [1m]))",
               "legendFormat": "{{response_code}}"
             }
           ]
@@ -537,7 +537,7 @@ data:
           },
           "targets": [
             {
-              "expr": "sum by (response_code) (count_over_time({app=\"martin\"} [1m]))",
+              "expr": "sum by (response_code) (count_over_time({job=\"envoy-logs\"} |= \"martin\" [1m]))",
               "legendFormat": "{{response_code}}"
             }
           ]
@@ -549,7 +549,7 @@ data:
           "datasource": { "type": "loki", "uid": "" },
           "targets": [
             {
-              "expr": "topk(10, sum by (user) (count_over_time({namespace=\"lonctus\", user!=\"\"} [$__range])))",
+              "expr": "topk(10, sum by (user) (count_over_time({job=\"envoy-logs\", user!=\"\"} [$__range])))",
               "format": "table",
               "instant": true
             }
@@ -575,7 +575,7 @@ data:
           },
           "targets": [
             {
-              "expr": "{namespace=\"lonctus\", response_code=~\"[45]..\"}"
+              "expr": "{job=\"envoy-logs\", response_code=~\"[45]..\"}"
             }
           ]
         },
@@ -592,7 +592,7 @@ data:
           },
           "targets": [
             {
-              "expr": "sum by (app) (count_over_time({namespace=\"lonctus\"} [1m]))",
+              "expr": "sum by (method) (count_over_time({job=\"envoy-logs\"} [1m]))",
               "legendFormat": "{{app}}"
             }
           ]
@@ -617,10 +617,83 @@ data:
       "links": [],
       "panels": [
         {
-          "title": "Overall Latency Percentiles (all services)",
+          "title": "R — Request Rate per Service",
           "type": "timeseries",
-          "gridPos": { "h": 8, "w": 24, "x": 0, "y": 0 },
-          "datasource": { "type": "loki", "uid": "" },
+          "description": "Requests per second by service (Envoy downstream)",
+          "gridPos": { "h": 7, "w": 8, "x": 0, "y": 0 },
+          "datasource": { "type": "prometheus", "uid": "" },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "reqps",
+              "custom": { "fillOpacity": 15, "lineWidth": 2 }
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum by (app) (rate(envoy_http_downstream_rq_total{namespace=\"lonctus\"}[5m]))",
+              "legendFormat": "{{app}}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "title": "E — Error Rate per Service (5xx)",
+          "type": "timeseries",
+          "description": "5xx responses per second from Envoy",
+          "gridPos": { "h": 7, "w": 8, "x": 8, "y": 0 },
+          "datasource": { "type": "prometheus", "uid": "" },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "reqps",
+              "custom": { "fillOpacity": 15, "lineWidth": 2 },
+              "color": { "mode": "palette-classic" }
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum by (app) (rate(envoy_http_downstream_rq_xx{namespace=\"lonctus\", envoy_response_code_class=\"5\"}[5m]))",
+              "legendFormat": "{{app}} 5xx",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "title": "E — Error Ratio (5xx / total)",
+          "type": "timeseries",
+          "description": "Percentage of requests returning 5xx",
+          "gridPos": { "h": 7, "w": 8, "x": 16, "y": 0 },
+          "datasource": { "type": "prometheus", "uid": "" },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percentunit",
+              "min": 0,
+              "max": 1,
+              "custom": { "fillOpacity": 15, "lineWidth": 2 },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "green", "value": null },
+                  { "color": "yellow", "value": 0.01 },
+                  { "color": "red", "value": 0.05 }
+                ]
+              },
+              "custom": { "fillOpacity": 15, "lineWidth": 2, "thresholdsStyle": { "mode": "line" } }
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum by (app) (rate(envoy_http_downstream_rq_xx{namespace=\"lonctus\", envoy_response_code_class=\"5\"}[5m])) / sum by (app) (rate(envoy_http_downstream_rq_total{namespace=\"lonctus\"}[5m]))",
+              "legendFormat": "{{app}}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "title": "D — Latency p50 / p90 / p99 (all services)",
+          "type": "timeseries",
+          "description": "Overall request latency percentiles from Envoy histograms",
+          "gridPos": { "h": 8, "w": 24, "x": 0, "y": 7 },
+          "datasource": { "type": "prometheus", "uid": "" },
           "fieldConfig": {
             "defaults": {
               "unit": "ms",
@@ -647,257 +720,31 @@ data:
           },
           "targets": [
             {
-              "expr": "quantile_over_time(0.99, {namespace=\"lonctus\"} | json | unwrap duration [5m])",
+              "expr": "histogram_quantile(0.99, sum(rate(envoy_http_downstream_rq_time_bucket{namespace=\"lonctus\"}[5m])) by (le))",
               "legendFormat": "p99",
               "refId": "A"
             },
             {
-              "expr": "quantile_over_time(0.90, {namespace=\"lonctus\"} | json | unwrap duration [5m])",
+              "expr": "histogram_quantile(0.90, sum(rate(envoy_http_downstream_rq_time_bucket{namespace=\"lonctus\"}[5m])) by (le))",
               "legendFormat": "p90",
               "refId": "B"
             },
             {
-              "expr": "quantile_over_time(0.75, {namespace=\"lonctus\"} | json | unwrap duration [5m])",
+              "expr": "histogram_quantile(0.75, sum(rate(envoy_http_downstream_rq_time_bucket{namespace=\"lonctus\"}[5m])) by (le))",
               "legendFormat": "p75",
               "refId": "C"
             },
             {
-              "expr": "quantile_over_time(0.50, {namespace=\"lonctus\"} | json | unwrap duration [5m])",
+              "expr": "histogram_quantile(0.50, sum(rate(envoy_http_downstream_rq_time_bucket{namespace=\"lonctus\"}[5m])) by (le))",
               "legendFormat": "p50",
               "refId": "D"
             }
           ]
         },
         {
-          "title": "Places API — Latency Percentiles",
+          "title": "Places API — Latency p50 / p90 / p99",
           "type": "timeseries",
-          "gridPos": { "h": 8, "w": 8, "x": 0, "y": 8 },
-          "datasource": { "type": "loki", "uid": "" },
-          "fieldConfig": {
-            "defaults": {
-              "unit": "ms",
-              "custom": { "fillOpacity": 10, "lineWidth": 2 }
-            }
-          },
-          "targets": [
-            {
-              "expr": "quantile_over_time(0.99, {app=\"places-scraper\"} | json | unwrap duration [5m])",
-              "legendFormat": "p99",
-              "refId": "A"
-            },
-            {
-              "expr": "quantile_over_time(0.90, {app=\"places-scraper\"} | json | unwrap duration [5m])",
-              "legendFormat": "p90",
-              "refId": "B"
-            },
-            {
-              "expr": "quantile_over_time(0.50, {app=\"places-scraper\"} | json | unwrap duration [5m])",
-              "legendFormat": "p50",
-              "refId": "C"
-            }
-          ]
-        },
-        {
-          "title": "Tileserver — Latency Percentiles",
-          "type": "timeseries",
-          "gridPos": { "h": 8, "w": 8, "x": 8, "y": 8 },
-          "datasource": { "type": "loki", "uid": "" },
-          "fieldConfig": {
-            "defaults": {
-              "unit": "ms",
-              "custom": { "fillOpacity": 10, "lineWidth": 2 }
-            }
-          },
-          "targets": [
-            {
-              "expr": "quantile_over_time(0.99, {app=\"tileserver\"} | json | unwrap duration [5m])",
-              "legendFormat": "p99",
-              "refId": "A"
-            },
-            {
-              "expr": "quantile_over_time(0.90, {app=\"tileserver\"} | json | unwrap duration [5m])",
-              "legendFormat": "p90",
-              "refId": "B"
-            },
-            {
-              "expr": "quantile_over_time(0.50, {app=\"tileserver\"} | json | unwrap duration [5m])",
-              "legendFormat": "p50",
-              "refId": "C"
-            }
-          ]
-        },
-        {
-          "title": "Martin — Latency Percentiles",
-          "type": "timeseries",
-          "gridPos": { "h": 8, "w": 8, "x": 16, "y": 8 },
-          "datasource": { "type": "loki", "uid": "" },
-          "fieldConfig": {
-            "defaults": {
-              "unit": "ms",
-              "custom": { "fillOpacity": 10, "lineWidth": 2 }
-            }
-          },
-          "targets": [
-            {
-              "expr": "quantile_over_time(0.99, {app=\"martin\"} | json | unwrap duration [5m])",
-              "legendFormat": "p99",
-              "refId": "A"
-            },
-            {
-              "expr": "quantile_over_time(0.90, {app=\"martin\"} | json | unwrap duration [5m])",
-              "legendFormat": "p90",
-              "refId": "B"
-            },
-            {
-              "expr": "quantile_over_time(0.50, {app=\"martin\"} | json | unwrap duration [5m])",
-              "legendFormat": "p50",
-              "refId": "C"
-            }
-          ]
-        },
-        {
-          "title": "p99 Latency per User",
-          "type": "timeseries",
-          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
-          "datasource": { "type": "loki", "uid": "" },
-          "fieldConfig": {
-            "defaults": {
-              "unit": "ms",
-              "custom": { "fillOpacity": 10, "lineWidth": 2 }
-            }
-          },
-          "targets": [
-            {
-              "expr": "quantile_over_time(0.99, {namespace=\"lonctus\", user!=\"\"} | json | __error__=\"\" | unwrap duration [5m]) by (user)",
-              "legendFormat": "{{user}}",
-              "refId": "A"
-            }
-          ]
-        },
-        {
-          "title": "p50 Latency per User",
-          "type": "timeseries",
-          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
-          "datasource": { "type": "loki", "uid": "" },
-          "fieldConfig": {
-            "defaults": {
-              "unit": "ms",
-              "custom": { "fillOpacity": 10, "lineWidth": 2 }
-            }
-          },
-          "targets": [
-            {
-              "expr": "quantile_over_time(0.50, {namespace=\"lonctus\", user!=\"\"} | json | __error__=\"\" | unwrap duration [5m]) by (user)",
-              "legendFormat": "{{user}}",
-              "refId": "A"
-            }
-          ]
-        },
-        {
-          "title": "Slowest Users — Average Latency",
-          "type": "table",
-          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 24 },
-          "datasource": { "type": "loki", "uid": "" },
-          "fieldConfig": {
-            "defaults": {
-              "unit": "ms",
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  { "color": "green", "value": null },
-                  { "color": "yellow", "value": 200 },
-                  { "color": "red", "value": 1000 }
-                ]
-              },
-              "custom": { "displayMode": "color-background" }
-            }
-          },
-          "targets": [
-            {
-              "expr": "topk(10, avg_over_time({namespace=\"lonctus\", user!=\"\"} | json | __error__=\"\" | unwrap duration [$__range]) by (user))",
-              "format": "table",
-              "instant": true,
-              "refId": "A"
-            }
-          ],
-          "transformations": [
-            { "id": "organize", "options": { "excludeByName": { "Time": true }, "renameByName": { "user": "User", "Value": "Avg Latency (ms)" } } }
-          ]
-        },
-        {
-          "title": "Slowest Requests — p99 per Service + Method",
-          "type": "table",
-          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 24 },
-          "datasource": { "type": "loki", "uid": "" },
-          "fieldConfig": {
-            "defaults": {
-              "unit": "ms",
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  { "color": "green", "value": null },
-                  { "color": "yellow", "value": 200 },
-                  { "color": "red", "value": 1000 }
-                ]
-              },
-              "custom": { "displayMode": "color-background" }
-            }
-          },
-          "targets": [
-            {
-              "expr": "topk(10, quantile_over_time(0.99, {namespace=\"lonctus\"} | json | __error__=\"\" | unwrap duration [$__range]) by (app, method))",
-              "format": "table",
-              "instant": true,
-              "refId": "A"
-            }
-          ],
-          "transformations": [
-            { "id": "organize", "options": { "excludeByName": { "Time": true }, "renameByName": { "app": "Service", "method": "Method", "Value": "p99 Latency (ms)" } } }
-          ]
-        },
-        {
-          "title": "Latency vs Response Code",
-          "type": "timeseries",
-          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 32 },
-          "datasource": { "type": "loki", "uid": "" },
-          "fieldConfig": {
-            "defaults": {
-              "unit": "ms",
-              "custom": { "fillOpacity": 10, "lineWidth": 2 }
-            }
-          },
-          "targets": [
-            {
-              "expr": "avg_over_time({namespace=\"lonctus\"} | json | __error__=\"\" | unwrap duration [5m]) by (response_code)",
-              "legendFormat": "{{response_code}}",
-              "refId": "A"
-            }
-          ]
-        },
-        {
-          "title": "Response Size per Service (avg bytes)",
-          "type": "timeseries",
-          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 32 },
-          "datasource": { "type": "loki", "uid": "" },
-          "fieldConfig": {
-            "defaults": {
-              "unit": "bytes",
-              "custom": { "fillOpacity": 15, "lineWidth": 2 }
-            }
-          },
-          "targets": [
-            {
-              "expr": "avg_over_time({namespace=\"lonctus\"} | json | __error__=\"\" | unwrap bytes_sent [5m]) by (app)",
-              "legendFormat": "{{app}}",
-              "refId": "A"
-            }
-          ]
-        },
-        {
-          "title": "Envoy Histogram — Downstream Request Time (VictoriaMetrics)",
-          "type": "timeseries",
-          "description": "Service-level latency from Envoy's built-in Prometheus histograms",
-          "gridPos": { "h": 8, "w": 24, "x": 0, "y": 40 },
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 15 },
           "datasource": { "type": "prometheus", "uid": "" },
           "fieldConfig": {
             "defaults": {
@@ -905,43 +752,68 @@ data:
               "custom": { "fillOpacity": 10, "lineWidth": 2 }
             },
             "overrides": [
-              {
-                "matcher": { "id": "byName", "options": "p99" },
-                "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } }]
-              },
-              {
-                "matcher": { "id": "byName", "options": "p90" },
-                "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "orange" } }]
-              },
-              {
-                "matcher": { "id": "byName", "options": "p50" },
-                "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "green" } }]
-              }
+              { "matcher": { "id": "byName", "options": "p99" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } }] },
+              { "matcher": { "id": "byName", "options": "p90" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "orange" } }] },
+              { "matcher": { "id": "byName", "options": "p50" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "green" } }] }
             ]
           },
           "targets": [
             {
-              "expr": "histogram_quantile(0.99, sum(rate(envoy_http_downstream_rq_time_bucket[5m])) by (le))",
+              "expr": "histogram_quantile(0.99, sum(rate(envoy_http_downstream_rq_time_bucket{app=\"places-scraper\"}[5m])) by (le))",
               "legendFormat": "p99",
               "refId": "A"
             },
             {
-              "expr": "histogram_quantile(0.90, sum(rate(envoy_http_downstream_rq_time_bucket[5m])) by (le))",
+              "expr": "histogram_quantile(0.90, sum(rate(envoy_http_downstream_rq_time_bucket{app=\"places-scraper\"}[5m])) by (le))",
               "legendFormat": "p90",
               "refId": "B"
             },
             {
-              "expr": "histogram_quantile(0.50, sum(rate(envoy_http_downstream_rq_time_bucket[5m])) by (le))",
+              "expr": "histogram_quantile(0.50, sum(rate(envoy_http_downstream_rq_time_bucket{app=\"places-scraper\"}[5m])) by (le))",
               "legendFormat": "p50",
               "refId": "C"
             }
           ]
         },
         {
-          "title": "Envoy Histogram — Latency per Service (VictoriaMetrics)",
+          "title": "Martin — Latency p50 / p90 / p99",
           "type": "timeseries",
-          "description": "p99 latency per service from Envoy's Prometheus histogram metrics",
-          "gridPos": { "h": 8, "w": 24, "x": 0, "y": 48 },
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 15 },
+          "datasource": { "type": "prometheus", "uid": "" },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ms",
+              "custom": { "fillOpacity": 10, "lineWidth": 2 }
+            },
+            "overrides": [
+              { "matcher": { "id": "byName", "options": "p99" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } }] },
+              { "matcher": { "id": "byName", "options": "p90" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "orange" } }] },
+              { "matcher": { "id": "byName", "options": "p50" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "green" } }] }
+            ]
+          },
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.99, sum(rate(envoy_http_downstream_rq_time_bucket{app=\"martin\"}[5m])) by (le))",
+              "legendFormat": "p99",
+              "refId": "A"
+            },
+            {
+              "expr": "histogram_quantile(0.90, sum(rate(envoy_http_downstream_rq_time_bucket{app=\"martin\"}[5m])) by (le))",
+              "legendFormat": "p90",
+              "refId": "B"
+            },
+            {
+              "expr": "histogram_quantile(0.50, sum(rate(envoy_http_downstream_rq_time_bucket{app=\"martin\"}[5m])) by (le))",
+              "legendFormat": "p50",
+              "refId": "C"
+            }
+          ]
+        },
+        {
+          "title": "p99 Latency — Service Comparison",
+          "type": "timeseries",
+          "description": "Compare p99 latency across all services",
+          "gridPos": { "h": 8, "w": 24, "x": 0, "y": 23 },
           "datasource": { "type": "prometheus", "uid": "" },
           "fieldConfig": {
             "defaults": {
@@ -951,26 +823,173 @@ data:
           },
           "targets": [
             {
-              "expr": "histogram_quantile(0.99, sum(rate(envoy_http_downstream_rq_time_bucket[5m])) by (le, app))",
+              "expr": "histogram_quantile(0.99, sum by (le, app) (rate(envoy_http_downstream_rq_time_bucket{namespace=\"lonctus\"}[5m])))",
+              "legendFormat": "{{app}}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "title": "Response Code Breakdown per Service",
+          "type": "timeseries",
+          "description": "HTTP response class (2xx, 3xx, 4xx, 5xx) per service",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 31 },
+          "datasource": { "type": "prometheus", "uid": "" },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "reqps",
+              "custom": { "fillOpacity": 15, "lineWidth": 2, "stacking": { "mode": "normal" } }
+            },
+            "overrides": [
+              { "matcher": { "id": "byRegexp", "options": ".*2xx" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "green" } }] },
+              { "matcher": { "id": "byRegexp", "options": ".*4xx" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "yellow" } }] },
+              { "matcher": { "id": "byRegexp", "options": ".*5xx" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } }] }
+            ]
+          },
+          "targets": [
+            {
+              "expr": "sum by (app, envoy_response_code_class) (rate(envoy_http_downstream_rq_xx{namespace=\"lonctus\"}[5m]))",
+              "legendFormat": "{{app}} {{envoy_response_code_class}}xx",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "title": "Active Connections per Service",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 31 },
+          "datasource": { "type": "prometheus", "uid": "" },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "custom": { "fillOpacity": 15, "lineWidth": 2 }
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum by (app) (envoy_http_downstream_cx_active{namespace=\"lonctus\"})",
+              "legendFormat": "{{app}}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "title": "Upstream Response Time (backend behind Envoy)",
+          "type": "timeseries",
+          "description": "How long the actual backend takes to respond (excludes Envoy overhead)",
+          "gridPos": { "h": 8, "w": 24, "x": 0, "y": 39 },
+          "datasource": { "type": "prometheus", "uid": "" },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ms",
+              "custom": { "fillOpacity": 10, "lineWidth": 2 }
+            },
+            "overrides": [
+              { "matcher": { "id": "byRegexp", "options": ".*p99" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } }] },
+              { "matcher": { "id": "byRegexp", "options": ".*p50" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "green" } }] }
+            ]
+          },
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.99, sum by (le, app) (rate(envoy_cluster_upstream_rq_time_bucket{namespace=\"lonctus\"}[5m])))",
               "legendFormat": "{{app}} p99",
               "refId": "A"
             },
             {
-              "expr": "histogram_quantile(0.50, sum(rate(envoy_http_downstream_rq_time_bucket[5m])) by (le, app))",
+              "expr": "histogram_quantile(0.50, sum by (le, app) (rate(envoy_cluster_upstream_rq_time_bucket{namespace=\"lonctus\"}[5m])))",
               "legendFormat": "{{app}} p50",
               "refId": "B"
+            }
+          ]
+        },
+        {
+          "title": "Envoy Overhead (downstream - upstream latency)",
+          "type": "timeseries",
+          "description": "Time spent in Envoy itself (JWT validation, routing). downstream_rq_time - upstream_rq_time",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 47 },
+          "datasource": { "type": "prometheus", "uid": "" },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ms",
+              "custom": { "fillOpacity": 10, "lineWidth": 2 }
+            }
+          },
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.50, sum by (le, app) (rate(envoy_http_downstream_rq_time_bucket{namespace=\"lonctus\"}[5m]))) - histogram_quantile(0.50, sum by (le, app) (rate(envoy_cluster_upstream_rq_time_bucket{namespace=\"lonctus\"}[5m])))",
+              "legendFormat": "{{app}} overhead (p50)",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "title": "Response Size (bytes sent)",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 47 },
+          "datasource": { "type": "prometheus", "uid": "" },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "Bps",
+              "custom": { "fillOpacity": 15, "lineWidth": 2 }
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum by (app) (rate(envoy_http_downstream_cx_tx_bytes_total{namespace=\"lonctus\"}[5m]))",
+              "legendFormat": "{{app}}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "title": "Per-User Latency p99 (Loki)",
+          "type": "timeseries",
+          "description": "Per-user latency breakdown — only available from access logs, not metrics",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 55 },
+          "datasource": { "type": "loki", "uid": "" },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ms",
+              "custom": { "fillOpacity": 10, "lineWidth": 2 }
+            }
+          },
+          "targets": [
+            {
+              "expr": "quantile_over_time(0.99, {job=\"envoy-logs\"} | json | user!=\"\" | user!=\"-\" | unwrap duration [5m]) by (user)",
+              "legendFormat": "{{user}}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "title": "Per-User Latency p50 (Loki)",
+          "type": "timeseries",
+          "description": "Per-user latency breakdown — only available from access logs, not metrics",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 55 },
+          "datasource": { "type": "loki", "uid": "" },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ms",
+              "custom": { "fillOpacity": 10, "lineWidth": 2 }
+            }
+          },
+          "targets": [
+            {
+              "expr": "quantile_over_time(0.50, {job=\"envoy-logs\"} | json | user!=\"\" | user!=\"-\" | unwrap duration [5m]) by (user)",
+              "legendFormat": "{{user}}",
+              "refId": "A"
             }
           ]
         }
       ],
       "refresh": "30s",
       "schemaVersion": 39,
-      "tags": ["latency", "envoy", "performance"],
+      "tags": ["RED", "envoy", "latency", "performance"],
       "templating": { "list": [] },
       "time": { "from": "now-1h", "to": "now" },
       "timepicker": {},
       "timezone": "browser",
-      "title": "Request Latency & Percentiles",
+      "title": "Envoy RED Metrics & Latency",
       "uid": "request-latency"
     }
   lonctus-pods.json: |
