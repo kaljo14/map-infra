@@ -30,6 +30,7 @@ resources:
 - apps/monitoring/grafana/ingress.yaml
 - apps/monitoring/loki/configmap.yaml
 - apps/monitoring/loki/deployment.yaml
+- apps/monitoring/loki/ingress.yaml
 - apps/monitoring/promtail/rbac.yaml
 - apps/monitoring/promtail/configmap.yaml
 - apps/monitoring/promtail/daemonset.yaml
