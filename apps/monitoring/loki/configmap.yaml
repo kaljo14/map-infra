@@ -38,5 +38,14 @@ data:
 
     compactor:
       working_directory: /loki/compactor
+      compaction_interval: 10m
       retention_enabled: true
       delete_request_store: filesystem
+      delete_request_cancel_period: 24h
+
+    storage_config:
+      filesystem:
+        directory: /loki/chunks
+      tsdb_shipper:
+        active_index_directory: /loki/tsdb-index
+        cache_location: /loki/tsdb-cache
