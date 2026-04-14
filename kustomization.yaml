@@ -36,6 +36,7 @@ resources:
 - apps/monitoring/victoriametrics/deployment.yaml
 - apps/monitoring/blackbox/configmap.yaml
 - apps/monitoring/blackbox/deployment.yaml
+- apps/monitoring/node-exporter/daemonset.yaml
 
 
 labels:
