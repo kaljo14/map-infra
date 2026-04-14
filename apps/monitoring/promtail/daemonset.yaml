@@ -16,6 +16,9 @@ spec:
       tolerations:
         - effect: NoSchedule
           operator: Exists
+      securityContext:
+        runAsUser: 0
+        runAsGroup: 0
       containers:
         - name: promtail
           image: grafana/promtail:3.1.0
@@ -29,6 +32,9 @@ spec:
               subPath: promtail.yaml
             - name: pods
               mountPath: /var/log/pods
+              readOnly: true
+            - name: containers
+              mountPath: /var/log/containers
               readOnly: true
             - name: positions
               mountPath: /tmp
@@ -62,5 +68,8 @@ spec:
         - name: pods
           hostPath:
             path: /var/log/pods
+        - name: containers
+          hostPath:
+            path: /var/log/containers
         - name: positions
           emptyDir: {}
