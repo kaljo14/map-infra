@@ -26,9 +26,9 @@ data:
     schema_config:
       configs:
         - from: 2020-10-24
-          store: tsdb
+          store: boltdb-shipper
           object_store: filesystem
-          schema: v13
+          schema: v11
           index:
             prefix: index_
             period: 24h
@@ -36,8 +36,9 @@ data:
     limits_config: {}
 
     storage_config:
+      boltdb_shipper:
+        active_index_directory: /loki/boltdb-shipper-active
+        cache_location: /loki/boltdb-shipper-cache
+        shared_store: filesystem
       filesystem:
         directory: /loki/chunks
-      tsdb_shipper:
-        active_index_directory: /loki/tsdb-index
-        cache_location: /loki/tsdb-cache
