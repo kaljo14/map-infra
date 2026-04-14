@@ -52,18 +52,24 @@ spec:
             limits:
               cpu: 500m
               memory: 1Gi
+          startupProbe:
+            httpGet:
+              path: /health
+              port: 8428
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            failureThreshold: 30
           readinessProbe:
             httpGet:
               path: /health
               port: 8428
-            initialDelaySeconds: 10
             periodSeconds: 10
           livenessProbe:
             httpGet:
               path: /health
               port: 8428
-            initialDelaySeconds: 30
             periodSeconds: 30
+            failureThreshold: 3
       volumes:
         - name: data
           persistentVolumeClaim:
