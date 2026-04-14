@@ -1,0 +1,150 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-alerts
+  namespace: monitoring
+data:
+  alerts.yml: |
+    groups:
+      # =============================================
+      # Pod Health — lonctus namespace
+      # =============================================
+      - name: lonctus-pod-health
+        rules:
+          - alert: PodCrashLooping
+            expr: increase(kube_pod_container_status_restarts_total{namespace="lonctus"}[1h]) > 3
+            for: 5m
+            labels:
+              severity: critical
+            annotations:
+              summary: "Pod {{ $labels.pod }}/{{ $labels.container }} is crash looping ({{ $value }} restarts in 1h)"
+
+          - alert: PodNotReady
+            expr: kube_pod_status_ready{namespace="lonctus", condition="true"} == 0
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: "Pod {{ $labels.pod }} has been not ready for 5 minutes"
+
+          - alert: ContainerOOMKilled
+            expr: increase(container_oom_events_total{namespace="lonctus"}[10m]) > 0
+            labels:
+              severity: critical
+            annotations:
+              summary: "Container {{ $labels.pod }}/{{ $labels.container }} was OOM killed"
+
+          - alert: HighMemoryUsage
+            expr: >
+              (container_memory_usage_bytes{namespace="lonctus", container!="", container!="POD"}
+              / container_spec_memory_limit_bytes{namespace="lonctus", container!="", container!="POD"}) > 0.9
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: "{{ $labels.pod }}/{{ $labels.container }} memory at {{ $value | humanizePercentage }} of limit"
+
+          - alert: HighCPUUsage
+            expr: >
+              sum by (pod, container) (rate(container_cpu_usage_seconds_total{namespace="lonctus", container!="", container!="POD"}[5m]))
+              / sum by (pod, container) (container_spec_cpu_quota{namespace="lonctus", container!="", container!="POD"} / container_spec_cpu_period{namespace="lonctus", container!="", container!="POD"}) > 0.9
+            for: 10m
+            labels:
+              severity: warning
+            annotations:
+              summary: "{{ $labels.pod }}/{{ $labels.container }} CPU at {{ $value | humanizePercentage }} of limit for 10m"
+
+      # =============================================
+      # Endpoint availability
+      # =============================================
+      - name: endpoint-availability
+        rules:
+          - alert: EndpointDown
+            expr: probe_success == 0
+            for: 2m
+            labels:
+              severity: critical
+            annotations:
+              summary: "Endpoint {{ $labels.instance }} is down"
+
+          - alert: SSLCertExpiringSoon
+            expr: probe_ssl_earliest_cert_expiry - time() < 7 * 24 * 3600
+            for: 1h
+            labels:
+              severity: warning
+            annotations:
+              summary: "SSL cert for {{ $labels.instance }} expires in {{ $value | humanizeDuration }}"
+
+          - alert: HighLatency
+            expr: probe_duration_seconds > 5
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: "Endpoint {{ $labels.instance }} latency is {{ $value }}s"
+
+      # =============================================
+      # Node / infrastructure
+      # =============================================
+      - name: node-health
+        rules:
+          - alert: HighDiskUsage
+            expr: (1 - node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) > 0.85
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: "Disk usage at {{ $value | humanizePercentage }} — clean up or expand storage"
+
+          - alert: DiskAlmostFull
+            expr: (1 - node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) > 0.95
+            for: 2m
+            labels:
+              severity: critical
+            annotations:
+              summary: "Disk usage at {{ $value | humanizePercentage }} — immediate action needed"
+
+          - alert: HighMemoryPressure
+            expr: (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) > 0.9
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: "Node memory at {{ $value | humanizePercentage }} — pods may get OOM killed"
+
+          - alert: HighCPUPressure
+            expr: 100 - (avg(rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 90
+            for: 10m
+            labels:
+              severity: warning
+            annotations:
+              summary: "Node CPU at {{ $value }}% for 10 minutes"
+
+      # =============================================
+      # Monitoring stack self-monitoring
+      # =============================================
+      - name: monitoring-health
+        rules:
+          - alert: PrometheusTargetDown
+            expr: up == 0
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: "Prometheus target {{ $labels.job }}/{{ $labels.instance }} is down"
+
+          - alert: VictoriaMetricsDown
+            expr: absent(up{job="victoriametrics"})
+            for: 2m
+            labels:
+              severity: critical
+            annotations:
+              summary: "VictoriaMetrics is not being scraped — metrics storage is down"
+
+          - alert: HighPrometheusMemory
+            expr: process_resident_memory_bytes{job="prometheus"} > 500 * 1024 * 1024
+            for: 10m
+            labels:
+              severity: warning
+            annotations:
+              summary: "Prometheus using {{ $value | humanize1024 }} memory — risk of OOMKill"

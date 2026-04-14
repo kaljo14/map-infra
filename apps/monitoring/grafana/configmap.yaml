@@ -20,6 +20,12 @@ data:
         access: proxy
         jsonData:
           maxLines: 1000
+      - name: Alertmanager
+        type: alertmanager
+        url: http://alertmanager.monitoring.svc.cluster.local:9093
+        access: proxy
+        jsonData:
+          implementation: prometheus
 ---
 apiVersion: v1
 kind: ConfigMap

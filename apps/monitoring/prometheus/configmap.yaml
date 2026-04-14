@@ -11,6 +11,14 @@ data:
       external_labels:
         cluster: lonctus-prod
 
+    alerting:
+      alertmanagers:
+        - static_configs:
+            - targets: ['alertmanager.monitoring.svc.cluster.local:9093']
+
+    rule_files:
+      - /etc/prometheus/alerts.yml
+
     remote_write:
       - url: http://victoriametrics.monitoring.svc.cluster.local:8428/api/v1/write
         queue_config:

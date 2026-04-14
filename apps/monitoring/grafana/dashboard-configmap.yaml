@@ -973,3 +973,259 @@ data:
       "title": "Request Latency & Percentiles",
       "uid": "request-latency"
     }
+  lonctus-pods.json: |
+    {
+      "annotations": { "list": [] },
+      "editable": true,
+      "fiscalYearStartMonth": 0,
+      "graphTooltip": 1,
+      "links": [],
+      "panels": [
+        {
+          "title": "Pod Status Overview",
+          "type": "stat",
+          "gridPos": { "h": 4, "w": 24, "x": 0, "y": 0 },
+          "datasource": { "type": "prometheus", "uid": "" },
+          "fieldConfig": {
+            "defaults": {
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "green", "value": null },
+                  { "color": "red", "value": 0.5 }
+                ]
+              },
+              "mappings": [
+                { "type": "value", "options": { "1": { "text": "UP", "color": "green" }, "0": { "text": "DOWN", "color": "red" } } }
+              ]
+            }
+          },
+          "targets": [
+            {
+              "expr": "up{namespace=\"lonctus\"}",
+              "legendFormat": "{{pod}}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "title": "Container Restarts (lonctus namespace)",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 24, "x": 0, "y": 4 },
+          "datasource": { "type": "prometheus", "uid": "" },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "custom": { "fillOpacity": 20, "lineWidth": 2, "drawStyle": "bars" },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "green", "value": null },
+                  { "color": "yellow", "value": 1 },
+                  { "color": "red", "value": 3 }
+                ]
+              }
+            }
+          },
+          "targets": [
+            {
+              "expr": "increase(kube_pod_container_status_restarts_total{namespace=\"lonctus\"}[1h])",
+              "legendFormat": "{{pod}} / {{container}}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "title": "Total Restarts (24h) — per Pod",
+          "type": "table",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+          "datasource": { "type": "prometheus", "uid": "" },
+          "fieldConfig": {
+            "defaults": {
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "green", "value": null },
+                  { "color": "yellow", "value": 1 },
+                  { "color": "red", "value": 5 }
+                ]
+              },
+              "custom": { "displayMode": "color-background" }
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum by (pod, container) (increase(kube_pod_container_status_restarts_total{namespace=\"lonctus\"}[24h])) > 0",
+              "format": "table",
+              "instant": true,
+              "refId": "A"
+            }
+          ],
+          "transformations": [
+            { "id": "organize", "options": { "excludeByName": { "Time": true }, "renameByName": { "pod": "Pod", "container": "Container", "Value": "Restarts (24h)" } } }
+          ]
+        },
+        {
+          "title": "Container CPU Usage (lonctus)",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
+          "datasource": { "type": "prometheus", "uid": "" },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percentunit",
+              "custom": { "fillOpacity": 10, "lineWidth": 2 }
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum by (pod, container) (rate(container_cpu_usage_seconds_total{namespace=\"lonctus\", container!=\"\", container!=\"POD\"}[5m]))",
+              "legendFormat": "{{pod}} / {{container}}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "title": "Container Memory Usage (lonctus)",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 20 },
+          "datasource": { "type": "prometheus", "uid": "" },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "bytes",
+              "custom": { "fillOpacity": 10, "lineWidth": 2 }
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum by (pod, container) (container_memory_usage_bytes{namespace=\"lonctus\", container!=\"\", container!=\"POD\"})",
+              "legendFormat": "{{pod}} / {{container}}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "title": "Memory vs Limit (lonctus)",
+          "type": "timeseries",
+          "description": "How close each container is to its memory limit — 100% = OOMKill risk",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 20 },
+          "datasource": { "type": "prometheus", "uid": "" },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percentunit",
+              "min": 0,
+              "max": 1,
+              "custom": { "fillOpacity": 15, "lineWidth": 2 },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "green", "value": null },
+                  { "color": "yellow", "value": 0.7 },
+                  { "color": "red", "value": 0.9 }
+                ]
+              },
+              "custom": { "fillOpacity": 15, "lineWidth": 2, "thresholdsStyle": { "mode": "line" } }
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum by (pod, container) (container_memory_usage_bytes{namespace=\"lonctus\", container!=\"\", container!=\"POD\"}) / sum by (pod, container) (container_spec_memory_limit_bytes{namespace=\"lonctus\", container!=\"\", container!=\"POD\"} > 0)",
+              "legendFormat": "{{pod}} / {{container}}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "title": "Network Receive by Pod (lonctus)",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 28 },
+          "datasource": { "type": "prometheus", "uid": "" },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "Bps",
+              "custom": { "fillOpacity": 10, "lineWidth": 2 }
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum by (pod) (rate(container_network_receive_bytes_total{namespace=\"lonctus\"}[5m]))",
+              "legendFormat": "{{pod}}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "title": "Network Transmit by Pod (lonctus)",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 28 },
+          "datasource": { "type": "prometheus", "uid": "" },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "Bps",
+              "custom": { "fillOpacity": 10, "lineWidth": 2 }
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum by (pod) (rate(container_network_transmit_bytes_total{namespace=\"lonctus\"}[5m]))",
+              "legendFormat": "{{pod}}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "title": "OOMKill Events (lonctus)",
+          "type": "stat",
+          "gridPos": { "h": 4, "w": 12, "x": 0, "y": 36 },
+          "datasource": { "type": "prometheus", "uid": "" },
+          "fieldConfig": {
+            "defaults": {
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "green", "value": null },
+                  { "color": "red", "value": 1 }
+                ]
+              }
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum(increase(container_oom_events_total{namespace=\"lonctus\"}[24h])) or vector(0)",
+              "legendFormat": "OOMKills (24h)",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "title": "Container Uptime (lonctus)",
+          "type": "table",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 36 },
+          "datasource": { "type": "prometheus", "uid": "" },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "dtdurations"
+            }
+          },
+          "targets": [
+            {
+              "expr": "time() - container_start_time_seconds{namespace=\"lonctus\", container!=\"\", container!=\"POD\"}",
+              "format": "table",
+              "instant": true,
+              "refId": "A"
+            }
+          ],
+          "transformations": [
+            { "id": "organize", "options": { "excludeByName": { "Time": true, "__name__": true, "beta_kubernetes_io_arch": true, "beta_kubernetes_io_instance_type": true, "beta_kubernetes_io_os": true, "id": true, "image": true, "instance": true, "job": true, "kubernetes_io_arch": true, "kubernetes_io_hostname": true, "kubernetes_io_os": true, "node_kubernetes_io_instance_type": true, "node_role_kubernetes_io_control_plane": true, "node_role_kubernetes_io_master": true, "cluster": true, "name": true }, "renameByName": { "pod": "Pod", "container": "Container", "namespace": "Namespace", "Value": "Uptime" } } }
+          ]
+        }
+      ],
+      "refresh": "30s",
+      "schemaVersion": 39,
+      "tags": ["lonctus", "pods", "health"],
+      "templating": { "list": [] },
+      "time": { "from": "now-3h", "to": "now" },
+      "timepicker": {},
+      "timezone": "browser",
+      "title": "Lonctus Pod Health",
+      "uid": "lonctus-pods"
+    }

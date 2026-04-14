@@ -38,6 +38,10 @@ resources:
 - apps/monitoring/blackbox/configmap.yaml
 - apps/monitoring/blackbox/deployment.yaml
 - apps/monitoring/node-exporter/daemonset.yaml
+- apps/monitoring/alertmanager/configmap.yaml
+- apps/monitoring/alertmanager/templates-configmap.yaml
+- apps/monitoring/alertmanager/deployment.yaml
+- apps/monitoring/prometheus/alerts-configmap.yaml
 
 
 labels:

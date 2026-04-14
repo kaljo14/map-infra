@@ -40,6 +40,9 @@ spec:
             - name: config
               mountPath: /etc/prometheus/prometheus.yml
               subPath: prometheus.yml
+            - name: alerts
+              mountPath: /etc/prometheus/alerts.yml
+              subPath: alerts.yml
             - name: data
               mountPath: /prometheus
           readinessProbe:
@@ -69,6 +72,12 @@ spec:
             items:
               - key: prometheus.yml
                 path: prometheus.yml
+        - name: alerts
+          configMap:
+            name: prometheus-alerts
+            items:
+              - key: alerts.yml
+                path: alerts.yml
         - name: data
           persistentVolumeClaim:
             claimName: prometheus-pvc

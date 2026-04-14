@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alertmanager-templates
+  namespace: monitoring
+data:
+  notifications.tmpl: |
+    {{ define "callmebot.message" }}{{ range .Alerts }}[{{ .Status | toUpper }}] {{ .Labels.alertname }}: {{ .Annotations.summary }}{{ end }}{{ end }}
+
+    {{ define "telegram.message" }}{{ range .Alerts }}<b>[{{ .Status | toUpper }}]</b> {{ .Labels.alertname }}
+    {{ .Annotations.summary }}
+    <i>{{ .Labels.namespace }}/{{ .Labels.pod }}</i>{{ end }}{{ end }}

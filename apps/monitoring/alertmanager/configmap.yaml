@@ -1,0 +1,62 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alertmanager-config
+  namespace: monitoring
+data:
+  alertmanager.yml: |
+    global:
+      resolve_timeout: 5m
+      # ============================================================
+      # Gmail SMTP — fill in your App Password
+      # 1. Go to https://myaccount.google.com/apppasswords
+      # 2. Generate an app password for "Mail"
+      # 3. Replace GMAIL_APP_PASSWORD below
+      # ============================================================
+      smtp_smarthost: 'smtp.gmail.com:587'
+      smtp_from: 'kaloyan.desislavov@gmail.com'
+      smtp_auth_username: 'kaloyan.desislavov@gmail.com'
+      smtp_auth_password: '${SMTP_PASSWORD}'
+      smtp_require_tls: true
+
+    route:
+      receiver: email
+      group_by: [alertname, namespace, pod]
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 4h
+
+      routes:
+        # Critical alerts — send immediately
+        - match:
+            severity: critical
+          receiver: email-critical
+          group_wait: 10s
+          repeat_interval: 1h
+
+    receivers:
+      - name: email
+        email_configs:
+          - to: 'kaloyan.desislavov@gmail.com'
+            send_resolved: true
+            headers:
+              Subject: '[{{ .Status | toUpper }}] Lonctus Alert: {{ .GroupLabels.alertname }}'
+
+      - name: email-critical
+        email_configs:
+          - to: 'kaloyan.desislavov@gmail.com'
+            send_resolved: true
+            headers:
+              Subject: '[CRITICAL] Lonctus: {{ .GroupLabels.alertname }}'
+
+      # ============================================================
+      # OPTIONAL: WhatsApp via CallMeBot (free)
+      # Send "I allow callmebot to send me messages" to +34 644 71 81 99
+      # Then uncomment and add your phone + apikey:
+      # ============================================================
+      # - name: whatsapp
+      #   webhook_configs:
+      #     - url: 'https://api.callmebot.com/whatsapp.php?phone=YOUR_PHONE&apikey=YOUR_KEY&text={{ template "callmebot.message" . }}'
+
+    templates:
+      - '/etc/alertmanager/templates/*.tmpl'
