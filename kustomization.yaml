@@ -24,6 +24,7 @@ resources:
 - apps/monitoring/prometheus/configmap.yaml
 - apps/monitoring/prometheus/deployment.yaml
 - apps/monitoring/grafana/configmap.yaml
+- apps/monitoring/grafana/dashboard-configmap.yaml
 - apps/monitoring/grafana/storage.yaml
 - apps/monitoring/grafana/deployment.yaml
 - apps/monitoring/grafana/ingress.yaml

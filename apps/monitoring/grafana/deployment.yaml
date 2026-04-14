@@ -34,6 +34,8 @@ spec:
             - name: dashboards-provisioning
               mountPath: /etc/grafana/provisioning/dashboards/dashboards.yaml
               subPath: dashboards.yaml
+            - name: dashboards
+              mountPath: /var/lib/grafana/dashboards
             - name: data
               mountPath: /var/lib/grafana
           resources:
@@ -56,6 +58,9 @@ spec:
             items:
               - key: dashboards.yaml
                 path: dashboards.yaml
+        - name: dashboards
+          configMap:
+            name: grafana-dashboards
         - name: data
           persistentVolumeClaim:
             claimName: grafana-pvc
