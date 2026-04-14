@@ -5,9 +5,12 @@ metadata:
   namespace: lonctus
 data:
   martin-config.yaml: |
-    # Martin tile sources derived from the live catalog.
-    # Tile endpoint pattern: https://martin.lonctus.com/{table}/{z}/{x}/{y}
+    # Martin tile server configuration — all layers for lonctus.com
+    # Tile endpoint: /api/martin/{source}/{z}/{x}/{y}
 
+    # =========================================================
+    # Core data tables
+    # =========================================================
     tables:
       places:
         schema: public
@@ -30,6 +33,28 @@ data:
         maxzoom: 22
         id_column: id
 
+      osm_pois:
+        schema: public
+        geometry_column: geom
+        minzoom: 10
+        maxzoom: 22
+        id_column: id
+
+      osm_nodes:
+        schema: public
+        geometry_column: geom
+        minzoom: 14
+        maxzoom: 22
+        id_column: id
+
+      osm_edges:
+        schema: public
+        geometry_column: geom
+        minzoom: 13
+        maxzoom: 22
+        id_column: id
+
+      # Metro lines
       metro_line_M1:
         schema: public
         geometry_column: geometry
@@ -58,116 +83,410 @@ data:
         maxzoom: 22
         id_column: id
 
+      # Heatmaps & grids
       population_grid:
         schema: public
         geometry_column: geometry
-        minzoom: 0
+        minzoom: 8
         maxzoom: 22
         id_column: id
 
       barbershop_density:
         schema: public
         geometry_column: geometry
-        minzoom: 0
+        minzoom: 8
         maxzoom: 22
         id_column: id
 
       opportunity_heatmap:
         schema: public
         geometry_column: geom
-        minzoom: 0
+        minzoom: 8
         maxzoom: 22
         id_column: id
 
-      # Accessibility & Transport tile views (SofiaPlan datasets 96, 279, 289, 282, 268, 333, 223, 472, 254, 602)
+      food_desert_h3:
+        schema: public
+        geometry_column: geom
+        minzoom: 8
+        maxzoom: 22
+        id_column: id
+
+      grocery_desert_h3:
+        schema: public
+        geometry_column: geom
+        minzoom: 8
+        maxzoom: 22
+        id_column: id
+
+      # Real estate
+      retail_listings:
+        schema: public
+        geometry_column: location
+        minzoom: 12
+        maxzoom: 22
+        id_column: id
+
+      adres_locations:
+        schema: public
+        geometry_column: location
+        minzoom: 12
+        maxzoom: 22
+        id_column: id
+
+      # Zoning params (raw table, not view)
+      sofiaplan_zoning_params:
+        schema: public
+        geometry_column: geom
+        minzoom: 8
+        maxzoom: 22
+        id_column: id
+
+    # =========================================================
+    # SofiaPlan tile views — zoning, demographics, economy
+    # =========================================================
+      sofiaplan_zoning_tiles:
+        schema: public
+        geometry_column: geom
+        minzoom: 8
+        maxzoom: 22
+        id_column: id
+
+      sofiaplan_income_tiles:
+        schema: public
+        geometry_column: geom
+        minzoom: 8
+        maxzoom: 22
+        id_column: id
+
+      sofiaplan_business_turnover_tiles:
+        schema: public
+        geometry_column: geom
+        minzoom: 8
+        maxzoom: 22
+        id_column: id
+
+      sofiaplan_property_prices_tiles:
+        schema: public
+        geometry_column: geom
+        minzoom: 8
+        maxzoom: 22
+        id_column: id
+
+      sofiaplan_neighborhoods_tiles:
+        schema: public
+        geometry_column: geom
+        minzoom: 8
+        maxzoom: 22
+        id_column: id
+
+      sofiaplan_metro_catchments_tiles:
+        schema: public
+        geometry_column: geom
+        minzoom: 8
+        maxzoom: 22
+        id_column: id
+
+      sofiaplan_population_grid_tiles:
+        schema: public
+        geometry_column: geom
+        minzoom: 8
+        maxzoom: 22
+        id_column: id
+
+      sofiaplan_development_potential_tiles:
+        schema: public
+        geometry_column: geom
+        minzoom: 10
+        maxzoom: 22
+        id_column: id
+
+      sofiaplan_census_addresses_tiles:
+        schema: public
+        geometry_column: geom
+        minzoom: 14
+        maxzoom: 22
+        id_column: id
+
+      sofiaplan_demographic_forecast_tiles:
+        schema: public
+        geometry_column: geom
+        minzoom: 8
+        maxzoom: 22
+        id_column: id
+
+      sofiaplan_demographic_forecast_ge_tiles:
+        schema: public
+        geometry_column: geom
+        minzoom: 8
+        maxzoom: 22
+        id_column: id
+
+      sofiaplan_population_potential_tiles:
+        schema: public
+        geometry_column: geom
+        minzoom: 8
+        maxzoom: 22
+        id_column: id
+
+      sofiaplan_residential_load_tiles:
+        schema: public
+        geometry_column: geom
+        minzoom: 8
+        maxzoom: 22
+        id_column: id
+
+    # =========================================================
+    # Transport & accessibility
+    # =========================================================
       sofiaplan_transit_access_ge_tiles:
         schema: public
         geometry_column: geom
-        minzoom: 0
+        minzoom: 8
         maxzoom: 22
         id_column: id
 
       sofiaplan_transit_access_district_tiles:
         schema: public
         geometry_column: geom
-        minzoom: 0
+        minzoom: 8
         maxzoom: 22
         id_column: id
 
       sofiaplan_metro_access_800m_tiles:
         schema: public
         geometry_column: geom
-        minzoom: 0
+        minzoom: 8
         maxzoom: 22
         id_column: id
 
       sofiaplan_metro_access_1200m_tiles:
         schema: public
         geometry_column: geom
-        minzoom: 0
+        minzoom: 8
         maxzoom: 22
         id_column: id
 
       sofiaplan_bus_lines_tiles:
         schema: public
         geometry_column: geom
-        minzoom: 0
+        minzoom: 8
         maxzoom: 22
         id_column: id
 
       sofiaplan_bus_lines_alt_tiles:
         schema: public
         geometry_column: geom
-        minzoom: 0
+        minzoom: 8
         maxzoom: 22
         id_column: id
 
       sofiaplan_trolleybus_lines_tiles:
         schema: public
         geometry_column: geom
-        minzoom: 0
+        minzoom: 8
         maxzoom: 22
         id_column: id
 
       sofiaplan_tram_lines_tiles:
         schema: public
         geometry_column: geom
-        minzoom: 0
+        minzoom: 8
         maxzoom: 22
         id_column: id
 
       sofiaplan_tram_lines_alt_tiles:
         schema: public
         geometry_column: geom
-        minzoom: 0
+        minzoom: 8
         maxzoom: 22
         id_column: id
 
       sofiaplan_railway_stations_tiles:
         schema: public
         geometry_column: geom
-        minzoom: 0
+        minzoom: 8
         maxzoom: 22
         id_column: id
 
+    # =========================================================
+    # Cycling network
+    # =========================================================
+      sofiaplan_cycling_network_tiles:
+        schema: public
+        geometry_column: geom
+        minzoom: 8
+        maxzoom: 22
+        id_column: id
+
+      sofiaplan_cycling_network_alt_tiles:
+        schema: public
+        geometry_column: geom
+        minzoom: 8
+        maxzoom: 22
+        id_column: id
+
+      sofiaplan_cycling_planned_tiles:
+        schema: public
+        geometry_column: geom
+        minzoom: 8
+        maxzoom: 22
+        id_column: id
+
+    # =========================================================
+    # Parking zones
+    # =========================================================
       parking_zones_tiles:
         schema: public
         geometry_column: geom
-        minzoom: 0
+        minzoom: 8
         maxzoom: 22
         id_column: id
 
-      # Health service datasets (SofiaPlan datasets 597, 598)
+      sofiaplan_parking_green:
+        schema: public
+        geometry_column: geom
+        minzoom: 8
+        maxzoom: 22
+        id_column: id
+
+      sofiaplan_parking_blue:
+        schema: public
+        geometry_column: geom
+        minzoom: 8
+        maxzoom: 22
+        id_column: id
+
+    # =========================================================
+    # Health services
+    # =========================================================
       sofiaplan_health_service_concentration_tiles:
         schema: public
         geometry_column: geom
-        minzoom: 0
+        minzoom: 8
         maxzoom: 22
         id_column: id
 
       sofiaplan_health_infrastructure_concentration_tiles:
         schema: public
         geometry_column: geom
-        minzoom: 0
+        minzoom: 8
+        maxzoom: 22
+        id_column: id
+
+    # =========================================================
+    # Buildings & urban morphology
+    # =========================================================
+      sofiaplan_building_density_ge_tiles:
+        schema: public
+        geometry_column: geom
+        minzoom: 8
+        maxzoom: 22
+        id_column: id
+
+      sofiaplan_building_footprint_ge_tiles:
+        schema: public
+        geometry_column: geom
+        minzoom: 8
+        maxzoom: 22
+        id_column: id
+
+      sofiaplan_residential_typology_ge_tiles:
+        schema: public
+        geometry_column: geom
+        minzoom: 8
+        maxzoom: 22
+        id_column: id
+
+      sofiaplan_urban_morphology_ge_tiles:
+        schema: public
+        geometry_column: geom
+        minzoom: 8
+        maxzoom: 22
+        id_column: id
+
+    # =========================================================
+    # Pedestrian network
+    # =========================================================
+      sofiaplan_pedestrian_syntax_tiles:
+        schema: public
+        geometry_column: geom
+        minzoom: 10
+        maxzoom: 22
+        id_column: id
+
+      sofiaplan_pedestrian_city_tiles:
+        schema: public
+        geometry_column: geom
+        minzoom: 10
+        maxzoom: 22
+        id_column: id
+
+      sofiaplan_pedestrian_city_alt_tiles:
+        schema: public
+        geometry_column: geom
+        minzoom: 10
+        maxzoom: 22
+        id_column: id
+
+      sofiaplan_pedestrian_municipality_tiles:
+        schema: public
+        geometry_column: geom
+        minzoom: 10
+        maxzoom: 22
+        id_column: id
+
+      sofiaplan_pedestrian_municipality_alt_tiles:
+        schema: public
+        geometry_column: geom
+        minzoom: 10
+        maxzoom: 22
+        id_column: id
+
+      sofiaplan_pedestrian_segmented_tiles:
+        schema: public
+        geometry_column: geom
+        minzoom: 10
+        maxzoom: 22
+        id_column: id
+
+      sofiaplan_pedestrian_integration_tiles:
+        schema: public
+        geometry_column: geom
+        minzoom: 10
+        maxzoom: 22
+        id_column: id
+
+    # =========================================================
+    # Flood risk
+    # =========================================================
+      sofiaplan_flood_risk_low_tiles:
+        schema: public
+        geometry_column: geom
+        minzoom: 8
+        maxzoom: 22
+        id_column: id
+
+      sofiaplan_flood_risk_medium_tiles:
+        schema: public
+        geometry_column: geom
+        minzoom: 8
+        maxzoom: 22
+        id_column: id
+
+      sofiaplan_flood_risk_high_tiles:
+        schema: public
+        geometry_column: geom
+        minzoom: 8
+        maxzoom: 22
+        id_column: id
+
+    # =========================================================
+    # Food desert / grocery analysis
+    # =========================================================
+      grocery_desert_tiles:
+        schema: public
+        geometry_column: geom
+        minzoom: 8
         maxzoom: 22
         id_column: id

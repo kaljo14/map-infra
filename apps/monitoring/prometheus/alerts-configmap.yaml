@@ -67,13 +67,6 @@ data:
             annotations:
               summary: "Public endpoint {{ $labels.instance }} is down"
 
-          - alert: ProtectedEndpointDown
-            expr: probe_success{job="blackbox-protected"} == 0 and probe_http_status_code{job="blackbox-protected"} == 0
-            for: 5m
-            labels:
-              severity: warning
-            annotations:
-              summary: "Protected endpoint {{ $labels.instance }} is unreachable (not responding at all)"
 
           - alert: SSLCertExpiringSoon
             expr: probe_ssl_earliest_cert_expiry - time() < 7 * 24 * 3600

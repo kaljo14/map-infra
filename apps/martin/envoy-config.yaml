@@ -51,6 +51,7 @@ data:
                       prefix: "/"
                     route:
                       cluster: local_service
+                      timeout: 120s
 
               http_filters:
               - name: envoy.filters.http.jwt_authn
