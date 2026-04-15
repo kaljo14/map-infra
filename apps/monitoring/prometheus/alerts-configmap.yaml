@@ -127,7 +127,7 @@ data:
       - name: monitoring-health
         rules:
           - alert: PrometheusTargetDown
-            expr: up == 0
+            expr: up{job!="victoriametrics"} == 0
             for: 5m
             labels:
               severity: warning
