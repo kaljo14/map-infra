@@ -126,13 +126,7 @@ data:
       # =============================================
       - name: monitoring-health
         rules:
-          - alert: PrometheusTargetDown
-            expr: up{job!="victoriametrics"} == 0
-            for: 5m
-            labels:
-              severity: warning
-            annotations:
-              summary: "Prometheus target {{ $labels.job }}/{{ $labels.instance }} is down"
+          # PrometheusTargetDown alert disabled
 
 
           - alert: HighPrometheusMemory
