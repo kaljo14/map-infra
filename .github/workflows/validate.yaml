@@ -1,0 +1,44 @@
+name: Validate
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  manifests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - name: Read the committed Flux version
+        id: flux-version
+        run: |
+          version=$(sed -n 's/^# Flux Version: //p' clusters/production/flux-system/gotk-components.yaml)
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+      - uses: fluxcd/flux2/action@v2.9.6
+        with:
+          version: ${{ steps.flux-version.outputs.version }}
+      - uses: azure/setup-kubectl@v4
+      - name: Validate manifests and Flux ownership
+        run: |
+          python3 -m venv "$RUNNER_TEMP/validation"
+          "$RUNNER_TEMP/validation/bin/pip" install -r scripts/requirements.txt
+          "$RUNNER_TEMP/validation/bin/python" scripts/validate.py
+          bash -n scripts/bootstrap-flux.sh
+
+  renovate-config:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/renovatebot/renovate:44.145.1
+      options: --user 0
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - run: renovate-config-validator --strict renovate.json

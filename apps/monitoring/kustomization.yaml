@@ -1,0 +1,38 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: monitoring
+resources:
+  - prometheus/rbac.yaml
+  - prometheus/configmap.yaml
+  - prometheus/deployment.yaml
+  - grafana/configmap.yaml
+  - grafana/dashboard-configmap.yaml
+  - grafana/storage.yaml
+  - grafana/deployment.yaml
+  - grafana/ingress.yaml
+  - loki/configmap.yaml
+  - loki/deployment.yaml
+  - loki/ingress.yaml
+  - promtail/rbac.yaml
+  - promtail/configmap.yaml
+  - promtail/daemonset.yaml
+  - victoriametrics/deployment.yaml
+  - blackbox/configmap.yaml
+  - blackbox/deployment.yaml
+  - node-exporter/daemonset.yaml
+  - alertmanager/configmap.yaml
+  - alertmanager/templates-configmap.yaml
+  - alertmanager/deployment.yaml
+  - prometheus/alerts-configmap.yaml
+labels:
+  - pairs:
+      managed-by: kustomize
+      env: production
+patches:
+  - target:
+      kind: PersistentVolumeClaim
+    patch: |-
+      - op: add
+        path: /metadata/annotations
+        value:
+          kustomize.toolkit.fluxcd.io/prune: disabled

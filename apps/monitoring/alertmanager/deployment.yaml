@@ -17,7 +17,7 @@ spec:
     spec:
       initContainers:
         - name: envsubst
-          image: busybox
+          image: busybox:latest
           command: ['sh', '-c', 'cp /config-tmpl/alertmanager.yml /etc/alertmanager/alertmanager.yml && sed -i "s|\${SMTP_PASSWORD}|$SMTP_PASSWORD|g" /etc/alertmanager/alertmanager.yml']
           env:
             - name: SMTP_PASSWORD

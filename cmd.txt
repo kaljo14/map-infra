@@ -1,2 +1,1 @@
-kubectl get events -n map --sort-by='.lastTimestamp' | tail -20
-
+kubectl --context="$KUBE_CONTEXT" get events -n lonctus --sort-by='.lastTimestamp' | tail -20

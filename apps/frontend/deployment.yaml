@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: kaljo14/my-map@sha256:754d665d1bcaf7a2867e95f4f23d155817095b655932b2a1a14bbaf78d67645d
+          image: kaljo14/my-map:latest@sha256:754d665d1bcaf7a2867e95f4f23d155817095b655932b2a1a14bbaf78d67645d
           env:
             - name: ENABLE_AUTH
               value: "true"

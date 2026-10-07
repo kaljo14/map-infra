@@ -1,8 +1,11 @@
+# Reconciled before the generator, without waiting for a consumer to bind it.
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: tiles-pvc
   namespace: lonctus
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
 spec:
   accessModes:
     - ReadWriteOnce

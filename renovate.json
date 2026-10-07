@@ -1,0 +1,43 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended", "docker:pinDigests"],
+  "enabledManagers": ["kubernetes", "kustomize", "flux", "github-actions", "pip_requirements"],
+  "kubernetes": {
+    "managerFilePatterns": ["/^apps/.*\\.ya?ml$/"]
+  },
+  "flux": {
+    "managerFilePatterns": ["/^clusters/.*\\.ya?ml$/"]
+  },
+  "ignorePaths": ["**/secret-placeholder.yaml"],
+  "automerge": false,
+  "dependencyDashboard": true,
+  "prCreation": "immediate",
+  "prHourlyLimit": 0,
+  "prConcurrentLimit": 0,
+  "packageRules": [
+    {
+      "description": "Track each application latest tag by digest, including rebuilt images",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": [
+        "kaljo14/my-map",
+        "kaljo14/places-scraper",
+        "kaljo14/grid-tile-generator"
+      ],
+      "allowedVersions": "/^latest$/",
+      "pinDigests": true,
+      "groupName": null,
+      "minimumReleaseAge": "0 days"
+    },
+    {
+      "description": "Update all Envoy sidecars together",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["envoyproxy/envoy"],
+      "groupName": "Envoy sidecars"
+    },
+    {
+      "description": "Review major third-party upgrades separately",
+      "matchUpdateTypes": ["major"],
+      "dependencyDashboardApproval": true
+    }
+  ]
+}
