@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: places-scraper
-  namespace: map
+  namespace: lonctus
   labels:
     app: places-scraper
 spec:
@@ -39,7 +39,7 @@ spec:
               cpu: 200m
               memory: 256Mi
         - name: places-scraper
-          image: kaljo14/places-scraper@sha256:923e71ebcfc82fc4eff8c90d96327b3c0978c13c620d0f1165985bb73d5e512c
+          image: kaljo14/places-scraper:latest@sha256:6841f48bc359249166c1192edf01536c3bd0b9d83c6e0636d83be003e8cbaf02
           ports:
             - name: app-port
               containerPort: 8080
@@ -63,6 +63,11 @@ spec:
                   name: places-scraper-secret
                   key: POSTGRES_DB
             - name: POSTGRES_CONN_STRING
+              valueFrom:
+                secretKeyRef:
+                  name: places-scraper-secret
+                  key: POSTGRES_CONN_STRING
+            - name: DATABASE_URL
               valueFrom:
                 secretKeyRef:
                   name: places-scraper-secret
@@ -92,7 +97,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: places-scraper
-  namespace: map
+  namespace: lonctus
   labels:
     app: places-scraper
 spec:

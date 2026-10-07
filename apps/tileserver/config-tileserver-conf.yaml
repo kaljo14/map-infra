@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: tileserver-config
-  namespace: map
+  namespace: lonctus
   labels:
     app: tileserver
 data:

@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: frontend
-  namespace: map
+  namespace: lonctus
   labels:
     app: frontend
 spec:
@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: kaljo14/my-map@sha256:b3daa2606565dbab7668b529abd72a59b7b301bd08419e828b9b1e99231026b3
+          image: kaljo14/my-map:latest@sha256:754d665d1bcaf7a2867e95f4f23d155817095b655932b2a1a14bbaf78d67645d
           env:
             - name: ENABLE_AUTH
               value: "true"
@@ -25,8 +25,6 @@ spec:
               value: "http://places-scraper"
             - name: TILES_API_URL
               value: "http://tileserver"
-            - name: KEYCLOAK_URL
-              value: "https://keycloak.mustaci.com"
             - name: MARTIN_API_URL
               value: "http://martin"
           ports:
@@ -45,7 +43,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: frontend
-  namespace: map
+  namespace: lonctus
   labels:
     app: frontend
 spec:

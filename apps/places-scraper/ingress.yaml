@@ -8,10 +8,10 @@ spec:
   ingressClassName: traefik
   tls:
   - hosts:
-    - places-scraper.mustaci.com
+    - places-scraper.lonctus.com
     secretName: scraper-tls
   rules:
-  - host: places-scraper.mustaci.com
+  - host: places-scraper.lonctus.com
     http:
       paths:
       - path: /

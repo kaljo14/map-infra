@@ -2,7 +2,10 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: grid-tile-generator
-  namespace: map
+  namespace: lonctus
+  annotations:
+    # Recreate this Job when an image update changes its immutable pod template.
+    kustomize.toolkit.fluxcd.io/force: enabled
 spec:
   template:
     spec:

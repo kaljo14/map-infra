@@ -1,72 +1,69 @@
-# Envoy + Keycloak Authentication Setup for K3s
+# map-infra
 
-Production-ready Kubernetes setup for deploying applications with Envoy sidecar authentication using Keycloak.
+Kubernetes manifests for **lonctus.com** on K3s, reconciled by **Flux CD**.
+**Renovate** proposes container image updates through GitHub pull requests.
+
+```text
+Build and push an image to Docker Hub / GHCR
+  → Renovate scans the registry (every 15 minutes, or image-pushed dispatch)
+  → GitHub pull request updates the image tag/digest
+  → validation passes and you merge to main
+  → Flux fetches main and reconciles the cluster
+```
+
+Application images track `latest` with immutable digests. Rebuilding `latest`
+produces a digest update PR; pushing an unrelated tag does not. Automatic merging
+is disabled. A pending PR may be updated with subsequent pushes.
 
 ## Services
 
-This repository includes configurations for:
-1. **Tileserver** - Serves vector tiles at `tiles.mustaci.com`
-2. **Places Scraper** - API for places data at `places-scraper.mustaci.com`
-3. **Frontend** - Main application at `mustaci.com`
+| Service | Namespace | Endpoint |
+| --- | --- | --- |
+| Frontend | lonctus | lonctus.com |
+| Places scraper | lonctus | places-scraper.lonctus.com |
+| Martin | lonctus | martin.lonctus.com |
+| Tileserver | lonctus | tiles.lonctus.com |
+| Monitoring stack | monitoring | Existing Grafana / Loki ingress routes |
 
-## Architecture
+Traefik handles ingress and cert-manager handles TLS. Envoy sidecars validate
+Clerk JWTs and apply role rules for protected services. Clerk issuer and JWKS are
+under `https://clerk.lonctus.com`; roles are `admin`, `map-viewer`, `data-viewer`,
+and `data-editor`. The tileserver Deployment remains intentionally scaled to zero.
 
+## Repository layout
+
+```text
+clusters/production/          Flux entrypoint and reconciliation graph
+  flux-system/               Generated Flux controllers and Git source
+  workloads.yaml             Namespaces, storage, apps, monitoring, generator
+infrastructure/namespaces/   lonctus and monitoring namespaces
+apps/                       Application Kustomize bundle
+  frontend/, places-scraper/, martin/, tileserver/
+  tileserver/storage/        Retained shared tile PVC
+  tileserver/generator/      Image-driven tile generation Job
+  monitoring/               Separate monitoring Kustomize bundle
+.github/workflows/           Renovate runner and pull request validation
+renovate.json                Image, Flux and tooling update policy
+scripts/bootstrap-flux.sh    Bootstrap with an explicit production context
+scripts/validate.py          Offline graph, schema and resource validation
+kustomization.yaml          Combined workload preview
 ```
-User Request 
-  ↓
-[ Traefik Ingress (TLS) ]
-  ↓
-[ Service (Port 80) ]
-  ↓
-[ Pod ]
-  ├── Envoy Sidecar (Port 8000) ← EXPOSED
-  │    ├── JWT Auth (Keycloak)
-  │    ├── RBAC (Role Check)
-  │    └── Router
-  │
-  └── Application Container (Port 3000/8080) ← HIDDEN
-```
 
-## Configuration
+See [DEPLOYMENT.md](DEPLOYMENT.md) for the Argo CD handover, GitHub credentials,
+image-push trigger, bootstrap, and rollback. Committing configuration alone does
+not install Flux or authorize Renovate: complete that setup to activate them.
 
-- **Keycloak Domain**: `keycloack.mustaci.com`
-- **Realm**: `barbershop-realm`
-- **Client**: `barbershop-app`
+## Local validation
 
-## Quick Start
-
-### 1. Configure Keycloak
-Follow [keycloak/roles-setup.md](keycloak/roles-setup.md) and [keycloak/client-config.md](keycloak/client-config.md).
-
-### 2. Deploy
+Install `kubectl`, the Flux CLI version recorded in `gotk-components.yaml`, and
+Python 3, then run:
 
 ```bash
-kubectl apply -k .
+python3 -m venv /tmp/map-infra-validation-venv
+/tmp/map-infra-validation-venv/bin/pip install -r scripts/requirements.txt
+/tmp/map-infra-validation-venv/bin/python scripts/validate.py
+kubectl kustomize .
 ```
 
-## Directory Structure
-
-```
-.
-├── apps/
-│   ├── tileserver/
-│   │   ├── envoy-config.yaml
-│   │   ├── deployment.yaml
-│   │   └── ingress.yaml
-│   └── places-scraper/
-│       ├── envoy-config.yaml
-│       ├── deployment.yaml
-│       └── ingress.yaml
-├── keycloak/
-│   ├── client-config.md
-│   └── roles-setup.md
-├── kustomization.yaml
-└── README.md
-```
-
-## Roles
-
-- **admin**: Full access to all services
-- **map-viewer**: Read-only access to tiles
-- **data-viewer**: Read-only access to places data
-- **data-editor**: Create, update, delete places data
+The root build previews workloads; `clusters/production` is Flux's entrypoint.
+GitHub Actions validates both and checks Renovate configuration on every PR.

@@ -17,6 +17,8 @@ metadata:
   namespace: monitoring
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: prometheus
@@ -40,15 +42,36 @@ spec:
             - name: config
               mountPath: /etc/prometheus/prometheus.yml
               subPath: prometheus.yml
+            - name: alerts
+              mountPath: /etc/prometheus/alerts.yml
+              subPath: alerts.yml
             - name: data
               mountPath: /prometheus
+          startupProbe:
+            httpGet:
+              path: /-/ready
+              port: 9090
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            failureThreshold: 30
+          readinessProbe:
+            httpGet:
+              path: /-/ready
+              port: 9090
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /-/healthy
+              port: 9090
+            periodSeconds: 15
+            failureThreshold: 3
           resources:
             requests:
               cpu: 100m
-              memory: 256Mi
+              memory: 384Mi
             limits:
               cpu: 500m
-              memory: 512Mi
+              memory: 768Mi
       volumes:
         - name: config
           configMap:
@@ -56,6 +79,12 @@ spec:
             items:
               - key: prometheus.yml
                 path: prometheus.yml
+        - name: alerts
+          configMap:
+            name: prometheus-alerts
+            items:
+              - key: alerts.yml
+                path: alerts.yml
         - name: data
           persistentVolumeClaim:
             claimName: prometheus-pvc

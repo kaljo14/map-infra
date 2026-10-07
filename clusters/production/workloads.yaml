@@ -1,0 +1,94 @@
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: namespaces
+  namespace: flux-system
+spec:
+  interval: 10m
+  retryInterval: 1m
+  timeout: 2m
+  path: ./infrastructure/namespaces
+  prune: false
+  deletionPolicy: Orphan
+  wait: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: map-apps
+  namespace: flux-system
+spec:
+  dependsOn:
+    - name: tile-storage
+  interval: 5m
+  retryInterval: 1m
+  timeout: 5m
+  path: ./apps
+  prune: true
+  deletionPolicy: Orphan
+  wait: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: monitoring
+  namespace: flux-system
+spec:
+  dependsOn:
+    - name: namespaces
+  interval: 5m
+  retryInterval: 1m
+  timeout: 5m
+  path: ./apps/monitoring
+  prune: true
+  deletionPolicy: Orphan
+  wait: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: tile-generator
+  namespace: flux-system
+spec:
+  dependsOn:
+    - name: tile-storage
+  interval: 10m
+  retryInterval: 1m
+  timeout: 30m
+  path: ./apps/tileserver/generator
+  prune: true
+  deletionPolicy: Orphan
+  wait: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: tile-storage
+  namespace: flux-system
+spec:
+  dependsOn:
+    - name: namespaces
+  interval: 10m
+  retryInterval: 1m
+  timeout: 2m
+  path: ./apps/tileserver/storage
+  prune: false
+  deletionPolicy: Orphan
+  # K3s local-path volumes bind only after a consumer Pod is scheduled.
+  # Waiting for Bound would block the generator that binds this PVC.
+  wait: false
+  sourceRef:
+    kind: GitRepository
+    name: flux-system

@@ -1,309 +1,225 @@
-# Deployment Guide
+# Flux CD deployment and Renovate image updates
 
-This guide walks you through deploying an application with Envoy authentication to your K3s cluster.
+## What is managed
 
-## Prerequisites Checklist
+Flux reads `kaljo14/map-infra`, branch `main`, path `clusters/production`. It polls
+Git every minute. Workload reconciliation corrects drift every five minutes
+(ten minutes for namespaces, tile storage, and the generator), and also runs when
+new Git revisions arrive. Renovate opens PRs; merging a PR approves deployment.
 
-- [ ] K3s cluster is running
-- [ ] `kubectl` is configured and can access the cluster
-- [ ] Keycloak is deployed and accessible
-- [ ] You have admin access to Keycloak
-- [ ] You have your application container image ready
+Five Flux Kustomizations own the existing stack:
 
-## Step-by-Step Deployment
+| Bundle | Depends on | Purpose |
+| --- | --- | --- |
+| namespaces | — | lonctus and monitoring |
+| tile-storage | namespaces | Create the retained tile PVC |
+| map-apps | tile-storage | Frontend, scraper, Martin, tileserver |
+| monitoring | namespaces | Prometheus, Grafana, Loki, Promtail, VictoriaMetrics, exporters, Alertmanager |
+| tile-generator | tile-storage | Run the tile generation Job |
 
-### 1. Configure Keycloak
+Tile storage uses `wait: false`: K3s local-path provisioning can wait for a consumer
+before binding the PVC. Requiring Bound before creating the generator would deadlock.
+The Job has a resource-level force annotation so an image change recreates its
+immutable pod template. A merged generator update runs generation again and can
+change data in `tiles-pvc`. No TTL is set on the completed Job, so Flux does not
+recreate it on each reconciliation.
 
-Follow the instructions in [`keycloak/client-config.md`](keycloak/client-config.md) to:
-- Create a new client in Keycloak
-- Configure the client settings
-- Add the audience mapper
-- Get the JWKS URI
+Namespaces and PVCs are protected from pruning. Workloads have `deletionPolicy:
+Orphan`, so deleting a Flux Kustomization retains its workloads; removing a workload
+from a live bundle still prunes it, except protected resources. Back up persistent
+data before the handover. Argo CD's pruning is separate from Flux's protection.
 
-### 2. Update Envoy Configuration
+## 1. Prepare the production cluster
 
-Edit `envoy/envoy-config.yaml` and replace the following placeholders:
+Install `kubectl`, Flux CLI (matching the version in
+`clusters/production/flux-system/gotk-components.yaml`), and `jq`. Select the real
+production context explicitly; a local kind context is not the production cluster.
+
+```bash
+export KUBE_CONTEXT=your-production-context
+kubectl --context="$KUBE_CONTEXT" get nodes
+flux check --pre --context="$KUBE_CONTEXT"
+```
+
+The preflight checks whether your Kubernetes version supports this Flux release.
+Upgrade K3s first if it fails. Traefik, cert-manager, the ingress ClusterIssuer,
+the storage provisioner, and the external PostgreSQL database are prerequisites;
+the original repository did not install them.
+
+Preserve existing secrets. For a fresh cluster, create namespaces with
+`kubectl --context="$KUBE_CONTEXT" apply -k infrastructure/namespaces`, then provision:
+
+| Namespace | Secret | Required keys |
+| --- | --- | --- |
+| lonctus | places-scraper-secret | POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB, POSTGRES_CONN_STRING |
+| lonctus | scraper-gg-secret | GOOGLE_PLACES_API_KEY |
+| monitoring | alertmanager-smtp | smtp-password |
+
+`secret-placeholder.yaml` files are examples, excluded from every bundle. Supply
+real values out of band; do not commit them. The frontend Clerk publishable key is
+a build-time setting, not a runtime Secret. Private container registries also
+require Kubernetes image pull credentials; Renovate's registry credentials do not
+provide credentials to cluster nodes.
+
+## 2. Hand over from Argo CD
+
+Do this **before merging the migration to main**, while the old Argo Application
+still points at the old tree. Save its configuration, turn off automatic sync, then
+orphan it without deleting workloads:
+
+```bash
+kubectl --context="$KUBE_CONTEXT" -n argocd get application map-infra -o json |
+  jq '{apiVersion,kind,metadata:{name:.metadata.name,namespace:.metadata.namespace},spec}' \
+  > /tmp/map-infra-argocd.json
+kubectl --context="$KUBE_CONTEXT" -n argocd patch application map-infra \
+  --type=merge -p '{"spec":{"syncPolicy":{"automated":null}}}'
+```
+
+Wait for any active Argo operation to finish (or terminate it in Argo CD). If a
+parent Application or ApplicationSet creates `map-infra`, remove that parent entry
+without cascading deletion first, so it cannot recreate the Application.
+
+```bash
+kubectl --context="$KUBE_CONTEXT" -n argocd patch application map-infra \
+  --type=merge -p '{"metadata":{"finalizers":null}}'
+kubectl --context="$KUBE_CONTEXT" -n argocd delete application map-infra
+```
+
+Removing the resource finalizer is the documented non-cascading Argo deletion
+procedure. Do not delete the namespaces, PVCs, or workloads. The application
+continues running while its GitOps controller is handed over. A new installation
+with no Argo Application skips this section.
+
+Merge the migration into `main` and pull that revision locally. The root build
+preserves all existing workload names; application namespace transformers also
+place the formerly implicit Services and scraper Ingress in `lonctus`.
+
+## 3. Bootstrap Flux
+
+Load `GITHUB_TOKEN` from your credential manager. Bootstrap needs access to write
+repository contents and add a deploy key. For an existing repository, a GitHub
+fine-grained PAT needs Contents and Administration read/write and Metadata read.
+The bootstrap token is separate from Renovate's token.
+
+```bash
+bash scripts/bootstrap-flux.sh "$KUBE_CONTEXT"
+unset GITHUB_TOKEN
+```
+
+The script checks prerequisites and refuses to proceed if the old `map-infra`
+Application still exists. Bootstrap commits its source configuration to `main`,
+installs the committed Flux release, and registers a read-only SSH deploy key.
+Allow that bootstrap commit through repository branch rules if required. Keep the
+`gotk-components.yaml` generated header: Renovate uses it to update Flux as a unit.
+
+```bash
+flux get sources git --context="$KUBE_CONTEXT"
+flux get kustomizations --context="$KUBE_CONTEXT"
+kubectl --context="$KUBE_CONTEXT" -n lonctus get pods,svc,ingress,pvc
+kubectl --context="$KUBE_CONTEXT" -n monitoring get pods,pvc
+```
+
+All five workload bundles should become Ready. The generator may take up to thirty
+minutes; the tileserver Deployment remains at `replicas: 0`. Keep Argo CD installed
+if it manages other applications. This repository only replaces its own Application.
+
+## 4. Enable Renovate in GitHub
+
+This repository runs Renovate in GitHub Actions, on a fifteen-minute schedule, with
+manual and `repository_dispatch` triggers. Do not also enable a hosted Renovate
+installation for this repository: use one runner to avoid competing PRs.
+
+In **Settings → Secrets and variables → Actions**, create `RENOVATE_TOKEN`. Use a
+bot account PAT with repository access. A classic PAT needs `repo` and `workflow`;
+for a fine-grained PAT, follow Renovate's permissions reference linked below
+(Contents, Pull requests, Issues, Commit statuses, and Workflows read/write;
+Dependabot alerts read; Members read when applicable to an organization).
+
+The default workflow `GITHUB_TOKEN` is not used as the Renovate credential, so
+Renovate's pull requests can trigger the validation workflow.
+
+For private Docker Hub images or authenticated registry access, also set
+`DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` with pull access. These credentials stay
+in GitHub Secrets and are passed to Renovate through host rules.
+
+Enable Actions, then run **Actions → Renovate → Run workflow** on `main`. Verify
+that the Dependency Dashboard and image PRs appear. Missing credentials produce
+an explicit workflow error. Scheduled runs require the workflow on the default
+branch; ensure the repository default is `main`. GitHub can delay scheduled jobs
+and disable schedules in inactive public repositories, so the dispatch trigger is
+useful for image builds.
+
+The frontend and scraper retain their previous digests and now explicitly track
+`latest`. Other images initially retain their existing tags; Renovate's first PRs
+pin those tags to digests. Merge those initial pinning PRs to make all container
+pulls reproducible. Until then, a mutable tag can still change on a pod restart.
+Envoy sidecars update together. Major third-party upgrades require approval in the
+Dependency Dashboard; ordinary image digest PRs do not. Automatic merge is disabled.
+
+Use branch protection/rulesets to require **manifests** and **renovate-config**
+checks on `main`, plus your desired review approval. Flux deploys anything merged
+to `main`; the repository configuration alone does not enforce GitHub branch rules.
+
+## 5. Trigger Renovate after an image push
+
+The application images currently track these Docker Hub tags:
+
+- `kaljo14/my-map:latest`
+- `kaljo14/places-scraper:latest`
+- `kaljo14/grid-tile-generator:latest`
+
+A successful build must push the tracked tag. A new digest behind that tag opens
+or updates a PR on the next scan. Pushing only a SHA tag or an unrelated release
+tag does not move `latest` and therefore does not trigger an update for it. To
+switch to semantic release tags, change the image tag and the `allowedVersions`
+rule together.
+
+For prompt detection, add this step **after the successful image push** in each
+producer repository's GitHub Actions workflow. Create `MAP_INFRA_DISPATCH_TOKEN`
+in that repository, scoped to `kaljo14/map-infra` with Contents write access:
 
 ```yaml
-# Line 35-36: Update issuer and JWKS URI
-issuer: "https://YOUR_KEYCLOAK_URL/realms/YOUR_REALM"
-
-# Line 38: Update audience
-audiences:
-- "YOUR_CLIENT_ID"
-
-# Line 40-41: Update JWKS URI
-uri: "https://YOUR_KEYCLOAK_URL/realms/YOUR_REALM/protocol/openid-connect/certs"
-
-# Line 76: Update your application port
-port_value: 3000  # Your application port
-
-# Line 85-87: Update Keycloak service address
-address: YOUR_KEYCLOAK_SERVICE_NAME.YOUR_NAMESPACE.svc.cluster.local
-port_value: 8080
-
-# Line 92: Update SNI
-sni: YOUR_KEYCLOAK_URL
+- name: Notify map-infra about the new image
+  env:
+    GH_TOKEN: ${{ secrets.MAP_INFRA_DISPATCH_TOKEN }}
+  run: |
+    gh api --method POST repos/kaljo14/map-infra/dispatches \
+      -f event_type=image-pushed
 ```
 
-**Example values:**
-- `YOUR_KEYCLOAK_URL`: `keycloak.example.com` or `keycloak.default.svc.cluster.local`
-- `YOUR_REALM`: `myrealm`
-- `YOUR_CLIENT_ID`: `my-app-client`
-- `YOUR_KEYCLOAK_SERVICE_NAME`: `keycloak`
-- `YOUR_NAMESPACE`: `default`
+This requests a fresh registry scan; the workflow does not trust an image tag or
+shell command from the event payload. Producer repositories are outside this
+repository and must receive the step themselves. The schedule remains a fallback
+if a notification is missed. Multiple pushes before a scan/merge can be combined
+into one open PR for the most recent digest; this is not one PR per push.
 
-### 3. Deploy Envoy ConfigMap
+## Operations and rollback
+
+Change manifests in Git and merge a PR. To reconcile immediately:
 
 ```bash
-kubectl apply -f envoy/envoy-config.yaml
+flux reconcile source git flux-system --context="$KUBE_CONTEXT"
+flux reconcile kustomization map-apps --with-source --context="$KUBE_CONTEXT"
+flux get kustomizations --context="$KUBE_CONTEXT"
+flux logs --level=error --context="$KUBE_CONTEXT"
 ```
 
-Verify the ConfigMap was created:
-```bash
-kubectl get configmap envoy-config
-kubectl describe configmap envoy-config
-```
+Revert a merged image PR to roll back to its previous digest. Keep old digests in
+your registry so they remain pullable. Reverting a generator image reruns the Job;
+it does not restore previous PVC data. ConfigMaps retain their existing names and
+mount behavior; services that load configuration only at startup need a rollout
+when configuration changes (for example, change a pod-template annotation in Git).
 
-### 4. Prepare Your Application Deployment
+To return to Argo, first suspend `flux-system` and every workload Kustomization,
+then revert the migration in Git and reapply `/tmp/map-infra-argocd.json`. Restore
+one controller at a time. Do not delete Flux Kustomizations as a shortcut while
+the parent is active, because the parent can recreate them.
 
-Choose one of the example deployments or create your own:
+## References
 
-**Option A: Use a sample deployment**
-```bash
-# For Node.js
-kubectl apply -f examples/nodejs-example-deployment.yaml
-
-# For Python
-kubectl apply -f examples/python-example-deployment.yaml
-
-# Generic sample
-kubectl apply -f examples/sample-app-deployment.yaml
-```
-
-**Option B: Create your own**
-
-Copy one of the examples and modify:
-1. Update the application container image
-2. Adjust the application port (must match Envoy config)
-3. Update environment variables
-4. Adjust resource limits
-5. Update health check endpoints
-
-### 5. Deploy Your Application
-
-```bash
-kubectl apply -f your-deployment.yaml
-```
-
-### 6. Verify Deployment
-
-Check pod status:
-```bash
-kubectl get pods -l app=your-app-name
-```
-
-You should see 2/2 containers running:
-```
-NAME                          READY   STATUS    RESTARTS   AGE
-your-app-xxxxxxxxx-xxxxx      2/2     Running   0          30s
-```
-
-Check logs:
-```bash
-# Envoy logs
-kubectl logs -l app=your-app-name -c envoy
-
-# Application logs
-kubectl logs -l app=your-app-name -c app
-```
-
-### 7. Test Authentication
-
-#### Get a JWT Token from Keycloak
-
-```bash
-TOKEN=$(curl -s -X POST \
-  'https://YOUR_KEYCLOAK_URL/realms/YOUR_REALM/protocol/openid-connect/token' \
-  -H 'Content-Type: application/x-www-form-urlencoded' \
-  -d 'client_id=YOUR_CLIENT_ID' \
-  -d 'username=YOUR_USERNAME' \
-  -d 'password=YOUR_PASSWORD' \
-  -d 'grant_type=password' | jq -r '.access_token')
-
-echo $TOKEN
-```
-
-#### Test Without Token (Should Fail)
-
-```bash
-kubectl port-forward svc/your-app-name 8080:80
-
-curl -v http://localhost:8080/
-# Expected: 401 Unauthorized
-```
-
-#### Test With Valid Token (Should Succeed)
-
-```bash
-curl -v -H "Authorization: Bearer $TOKEN" http://localhost:8080/
-# Expected: 200 OK with response from your application
-```
-
-### 8. Expose Your Application (Optional)
-
-#### Option A: NodePort (for testing)
-
-```yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: your-app-nodeport
-spec:
-  type: NodePort
-  ports:
-  - port: 80
-    targetPort: 8080
-    nodePort: 30080  # Choose a port between 30000-32767
-  selector:
-    app: your-app-name
-```
-
-#### Option B: LoadBalancer (if supported)
-
-```yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: your-app-lb
-spec:
-  type: LoadBalancer
-  ports:
-  - port: 80
-    targetPort: 8080
-  selector:
-    app: your-app-name
-```
-
-#### Option C: Ingress (recommended for production)
-
-```yaml
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: your-app-ingress
-  annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-prod  # If using cert-manager
-spec:
-  ingressClassName: traefik  # K3s default
-  rules:
-  - host: your-app.example.com
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: your-app-name
-            port:
-              number: 80
-  tls:
-  - hosts:
-    - your-app.example.com
-    secretName: your-app-tls
-```
-
-## Troubleshooting
-
-### Pod Not Starting
-
-```bash
-kubectl describe pod -l app=your-app-name
-kubectl logs -l app=your-app-name -c envoy --previous
-```
-
-Common issues:
-- ConfigMap not found: Ensure `envoy-config` ConfigMap exists
-- Image pull errors: Check image name and registry access
-- Resource limits: Adjust CPU/memory requests and limits
-
-### 401 Unauthorized Errors
-
-1. **Check Envoy logs:**
-   ```bash
-   kubectl logs -l app=your-app-name -c envoy | grep -i jwt
-   ```
-
-2. **Verify token:**
-   ```bash
-   echo $TOKEN | cut -d. -f2 | base64 -d | jq
-   ```
-   
-   Check:
-   - `iss` (issuer) matches Envoy config
-   - `aud` (audience) matches Envoy config
-   - `exp` (expiration) is in the future
-
-3. **Test JWKS endpoint:**
-   ```bash
-   curl https://YOUR_KEYCLOAK_URL/realms/YOUR_REALM/protocol/openid-connect/certs
-   ```
-
-### Envoy Can't Reach Keycloak
-
-1. **Test DNS resolution:**
-   ```bash
-   kubectl run -it --rm debug --image=busybox --restart=Never -- nslookup keycloak.default.svc.cluster.local
-   ```
-
-2. **Test connectivity:**
-   ```bash
-   kubectl run -it --rm debug --image=curlimages/curl --restart=Never -- curl -v http://keycloak.default.svc.cluster.local:8080
-   ```
-
-3. **Check Keycloak service:**
-   ```bash
-   kubectl get svc keycloak
-   kubectl get endpoints keycloak
-   ```
-
-### Application Not Receiving Requests
-
-1. **Check application is listening:**
-   ```bash
-   kubectl exec -it deployment/your-app-name -c app -- netstat -tlnp
-   ```
-
-2. **Verify port configuration:**
-   - Application listens on port 3000 (or your configured port)
-   - Envoy forwards to 127.0.0.1:3000
-   - Service targets Envoy port 8080
-
-3. **Test application directly:**
-   ```bash
-   kubectl port-forward deployment/your-app-name 3000:3000
-   curl http://localhost:3000/health
-   ```
-
-## Scaling
-
-Scale your deployment:
-```bash
-kubectl scale deployment your-app-name --replicas=3
-```
-
-## Updating Configuration
-
-After updating Envoy config:
-```bash
-kubectl apply -f envoy/envoy-config.yaml
-kubectl rollout restart deployment your-app-name
-```
-
-## Cleanup
-
-Remove all resources:
-```bash
-kubectl delete -f your-deployment.yaml
-kubectl delete configmap envoy-config
-```
+- [Flux GitHub bootstrap](https://fluxcd.io/flux/installation/bootstrap/github/)
+- [Flux reconciliation, health and pruning](https://fluxcd.io/flux/components/kustomize/kustomizations/)
+- [Argo CD non-cascading Application deletion](https://argo-cd.readthedocs.io/en/stable/user-guide/app_deletion/)
+- [Renovate Docker digest updates](https://docs.renovatebot.com/docker/)
+- [Renovate GitHub token permissions](https://docs.renovatebot.com/modules/platform/github/)
+- [Renovate GitHub Action](https://github.com/renovatebot/github-action)

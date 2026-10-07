@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: martin
-  namespace: map
+  namespace: lonctus
   labels:
     app: martin
 spec:
@@ -40,7 +40,7 @@ spec:
 
       - name: martin
         image: ghcr.io/maplibre/martin:latest
-        args: ["--config", "/etc/martin/martin-config.yaml"]
+        args: ["--config=/etc/martin/martin-config.yaml", "--auto-bounds=calc"]
         ports:
         - name: app-port
           containerPort: 3000
@@ -53,8 +53,8 @@ spec:
               key: POSTGRES_CONN_STRING
         volumeMounts:
         - name: martin-config
-          mountPath: /etc/martin
-          readOnly: true
+          mountPath: /etc/martin/martin-config.yaml
+          subPath: martin-config.yaml
         resources:
           requests:
             cpu: 100m
@@ -64,18 +64,18 @@ spec:
             memory: 512Mi
 
       volumes:
-      - name: envoy-config
-        configMap:
-          name: martin-envoy-config
-          items:
-          - key: envoy.yaml
-            path: envoy.yaml
       - name: martin-config
         configMap:
           name: martin-config
           items:
           - key: martin-config.yaml
             path: martin-config.yaml
+      - name: envoy-config
+        configMap:
+          name: martin-envoy-config
+          items:
+          - key: envoy.yaml
+            path: envoy.yaml
 ---
 apiVersion: v1
 kind: Service

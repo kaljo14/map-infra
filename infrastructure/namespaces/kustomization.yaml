@@ -1,0 +1,9 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - lonctus.yaml
+  - monitoring.yaml
+labels:
+  - pairs:
+      managed-by: kustomize
+      env: production

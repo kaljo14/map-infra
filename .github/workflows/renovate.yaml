@@ -1,0 +1,46 @@
+name: Renovate
+
+on:
+  schedule:
+    - cron: '7,22,37,52 * * * *'
+  workflow_dispatch:
+  repository_dispatch:
+    types: [image-pushed]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: renovate
+  cancel-in-progress: false
+
+jobs:
+  renovate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          # Dispatch runs always use the trusted production configuration.
+          ref: main
+          persist-credentials: false
+      - name: Check bot credentials
+        env:
+          RENOVATE_TOKEN: ${{ secrets.RENOVATE_TOKEN }}
+        run: |
+          if [ -z "$RENOVATE_TOKEN" ]; then
+            echo '::error::Add the RENOVATE_TOKEN repository secret; see DEPLOYMENT.md.'
+            exit 1
+          fi
+      - name: Open dependency update pull requests
+        uses: renovatebot/github-action@v46.3.7
+        with:
+          configurationFile: .github/renovate.cjs
+          token: ${{ secrets.RENOVATE_TOKEN }}
+          # Pin the bot itself; the github-actions manager updates this version.
+          renovate-version: 44.145.1
+          env-regex: '^(?:RENOVATE_\w+|LOG_LEVEL|GITHUB_REPOSITORY|DOCKERHUB_USERNAME|DOCKERHUB_TOKEN)$'
+        env:
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}

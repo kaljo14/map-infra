@@ -24,7 +24,7 @@ spec:
             - name: GF_PATHS_PROVISIONING
               value: /etc/grafana/provisioning
             - name: GF_SERVER_ROOT_URL
-              value: https://grafana.mustaci.com
+              value: https://grafana.lonctus.com
           ports:
             - containerPort: 3000
           volumeMounts:
@@ -34,8 +34,23 @@ spec:
             - name: dashboards-provisioning
               mountPath: /etc/grafana/provisioning/dashboards/dashboards.yaml
               subPath: dashboards.yaml
+            - name: dashboards
+              mountPath: /var/lib/grafana/dashboards
             - name: data
               mountPath: /var/lib/grafana
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            failureThreshold: 3
           resources:
             requests:
               cpu: 100m
@@ -56,6 +71,9 @@ spec:
             items:
               - key: dashboards.yaml
                 path: dashboards.yaml
+        - name: dashboards
+          configMap:
+            name: grafana-dashboards
         - name: data
           persistentVolumeClaim:
             claimName: grafana-pvc
