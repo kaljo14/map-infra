@@ -11,9 +11,12 @@ Build and push an image to Docker Hub / GHCR
   → Flux fetches main and reconciles the cluster
 ```
 
-Application images track `latest` with immutable digests. Rebuilding `latest`
-produces a digest update PR; pushing an unrelated tag does not. Automatic merging
-is disabled. A pending PR may be updated with subsequent pushes.
+Frontend, docs, and GeoPulse releases publish stable `MAJOR.MINOR.PATCH` image
+tags. Renovate updates versioned images and pins their digests; automatic merging
+is disabled. Existing `latest` references are retained until a real published
+release is adopted with `python3 scripts/adopt-release.py <app> <version>`.
+The tile-generator producer is outside this workspace and still tracks `latest`.
+See the semantic-release migration in [DEPLOYMENT.md](DEPLOYMENT.md).
 
 ## Services
 
