@@ -25,7 +25,7 @@ spec:
       containers:
         - name: docs
           # Renovate pins the first published image, then proposes digest updates.
-          image: kaljo14/docs:latest
+          image: kaljo14/docs:latest@sha256:ef54c4ba5df378de2cf02690c64742724a42c2eab8625327123bcfa2a9ac604e
           imagePullPolicy: Always
           ports:
             - name: http
