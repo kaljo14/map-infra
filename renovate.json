@@ -1,14 +1,29 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:recommended", "docker:pinDigests"],
-  "enabledManagers": ["kubernetes", "kustomize", "flux", "github-actions", "pip_requirements"],
+  "extends": [
+    "config:recommended",
+    "docker:pinDigests"
+  ],
+  "enabledManagers": [
+    "kubernetes",
+    "kustomize",
+    "flux",
+    "github-actions",
+    "pip_requirements"
+  ],
   "kubernetes": {
-    "managerFilePatterns": ["/^apps/.*\\.ya?ml$/"]
+    "managerFilePatterns": [
+      "/^apps/.*\\.ya?ml$/"
+    ]
   },
   "flux": {
-    "managerFilePatterns": ["/^clusters/.*\\.ya?ml$/"]
+    "managerFilePatterns": [
+      "/^clusters/.*\\.ya?ml$/"
+    ]
   },
-  "ignorePaths": ["**/secret-placeholder.yaml"],
+  "ignorePaths": [
+    "**/secret-placeholder.yaml"
+  ],
   "automerge": false,
   "dependencyDashboard": true,
   "prCreation": "immediate",
@@ -16,12 +31,42 @@
   "prConcurrentLimit": 0,
   "packageRules": [
     {
-      "description": "Track each application latest tag by digest, including rebuilt images",
-      "matchDatasources": ["docker"],
+      "description": "Track stable semantic application releases with immutable digests",
+      "matchDatasources": [
+        "docker"
+      ],
       "matchPackageNames": [
         "kaljo14/my-map",
         "kaljo14/docs",
-        "kaljo14/places-scraper",
+        "kaljo14/places-scraper"
+      ],
+      "versioning": "semver",
+      "allowedVersions": "/^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$/",
+      "pinDigests": true,
+      "groupName": null,
+      "minimumReleaseAge": "0 days"
+    },
+    {
+      "description": "Keep legacy latest references working until each first release is adopted",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "kaljo14/my-map",
+        "kaljo14/docs",
+        "kaljo14/places-scraper"
+      ],
+      "matchCurrentValue": "latest",
+      "versioning": "docker",
+      "allowedVersions": "/^latest$/",
+      "pinDigests": true
+    },
+    {
+      "description": "Tile generator producer is outside this workspace and still publishes latest",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
         "kaljo14/grid-tile-generator"
       ],
       "allowedVersions": "/^latest$/",
@@ -31,13 +76,19 @@
     },
     {
       "description": "Update all Envoy sidecars together",
-      "matchDatasources": ["docker"],
-      "matchPackageNames": ["envoyproxy/envoy"],
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "envoyproxy/envoy"
+      ],
       "groupName": "Envoy sidecars"
     },
     {
       "description": "Review major third-party upgrades separately",
-      "matchUpdateTypes": ["major"],
+      "matchUpdateTypes": [
+        "major"
+      ],
       "dependencyDashboardApproval": true
     }
   ]

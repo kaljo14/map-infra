@@ -268,31 +268,55 @@ branch; ensure the repository default is `main`. GitHub can delay scheduled jobs
 and disable schedules in inactive public repositories, so the dispatch trigger is
 useful for image builds.
 
-The frontend and scraper retain their previous digests and now explicitly track
-`latest`. Other images initially retain their existing tags; Renovate's first PRs
-pin those tags to digests. Merge those initial pinning PRs to make all container
-pulls reproducible. Until then, a mutable tag can still change on a pod restart.
-Envoy sidecars update together. Major third-party upgrades require approval in the
-Dependency Dashboard; ordinary image digest PRs do not. Automatic merge is disabled.
+Frontend, docs, and scraper accept stable `MAJOR.MINOR.PATCH` image versions.
+Renovate pins digests and proposes subsequent version upgrades. Existing `latest`
+references retain their legacy digest tracking until the first semantic release
+is adopted using section 5. Other images keep their existing version policies;
+the tile generator still tracks `latest` because its producer is outside this
+workspace. Envoy sidecars update together. Major third-party upgrades require
+approval in the Dependency Dashboard. Automatic merge is disabled.
 
 Use branch protection/rulesets to require **manifests** and **renovate-config**
 checks on `main`, plus your desired review approval. Flux deploys anything merged
 to `main`; the repository configuration alone does not enforce GitHub branch rules.
 
-## 5. Trigger Renovate after an image push
+## 5. Semantic releases and image-push notifications
 
-The application images currently track these Docker Hub tags:
+The frontend, docs, and GeoPulse producer workflows publish semantic image tags:
 
-- `kaljo14/my-map:latest`
-- `kaljo14/docs:latest`
-- `kaljo14/places-scraper:latest`
-- `kaljo14/grid-tile-generator:latest`
+| Producer | Git tag example | Image tag example |
+| --- | --- | --- |
+| `my-map` | `v1.2.3` | `kaljo14/my-map:1.2.3` |
+| `docs` | `v1.2.3` | `kaljo14/docs:1.2.3` |
+| `geoapi` (local `neofyis-geopulse`) | `v1.2.3` | `kaljo14/places-scraper:1.2.3` |
 
-A successful build must push the tracked tag. A new digest behind that tag opens
-or updates a PR on the next scan. Pushing only a SHA tag or an unrelated release
-tag does not move `latest` and therefore does not trigger an update for it. To
-switch to semantic release tags, change the image tag and the `allowedVersions`
-rule together.
+Version sequences are independent. Push a new stable `vMAJOR.MINOR.PATCH` tag
+from the intended release commit after the workflow changes are on `main`.
+Main-branch pushes run checks but no longer update `latest`. The stable release
+path rejects prereleases, build metadata, and leading zeroes. Never move a release
+tag to different source; use a new version for corrections.
+
+### Adopt the first semantic release
+
+Keep existing deployments until each producer has successfully published a real
+version. Then run the adoption command from this checkout with the actual version:
+
+```bash
+python3 scripts/adopt-release.py frontend 1.2.3
+python3 scripts/adopt-release.py docs 1.2.3
+python3 scripts/adopt-release.py places-scraper 1.2.3
+```
+
+These are independent examples, not required matching version numbers. The command
+uses Docker Buildx registry inspection (log in first for private images), requires
+AMD64 and ARM64 manifests, and writes `image:version@sha256:digest`. Registry
+failures leave the file unchanged. Review and merge each manifest diff to `main`.
+Renovate then proposes later stable releases and digest changes; Flux deploys
+merged updates. A temporary rule keeps legacy `latest` references on digest
+tracking until adoption; a notification does not migrate those references.
+
+`kaljo14/grid-tile-generator:latest` remains on the old policy. Its publishing
+source is absent from this workspace and must be migrated separately.
 
 For prompt detection, add this step **after the successful image push** in each
 producer repository's GitHub Actions workflow. Create `MAP_INFRA_DISPATCH_TOKEN`
@@ -308,8 +332,8 @@ in that repository, scoped to `kaljo14/map-infra` with Contents write access:
 ```
 
 This requests a fresh registry scan; the workflow does not trust an image tag or
-shell command from the event payload. Producer repositories are outside this
-repository and must receive the step themselves. The schedule remains a fallback
+shell command from the event payload. The frontend, docs, and GeoPulse workflows include this step, conditionally
+enabled when `MAP_INFRA_DISPATCH_TOKEN` is set. The schedule remains a fallback
 if a notification is missed. Multiple pushes before a scan/merge can be combined
 into one open PR for the most recent digest; this is not one PR per push.
 
@@ -324,7 +348,8 @@ files downloaded directly from a public registry.
 
 Before merging `apps/docs` into `main`:
 
-1. Run the docs workflow on `main` and verify `kaljo14/docs:latest` was published.
+1. Push a stable release tag in docs and verify its semantic image was published.
+   Run `python3 scripts/adopt-release.py docs <version>` to select it before merging.
 2. Point the DNS `A` record for `docs.lonctus.com` at the production ingress IP.
    Add an `AAAA` record only if IPv6 reaches that ingress too. DNS is managed
    outside this repository. Ensure ports 80/443 reach Traefik and the
@@ -357,10 +382,9 @@ Before merging `apps/docs` into `main`:
    `spec.template.spec` before merging. Omit it for a public image. Registry and
    BasicAuth credentials must never be committed to Git.
 
-Flux's existing `map-apps` bundle includes `apps/docs`. Renovate proposes the
-initial digest pin and subsequent updates; merge those PRs to deploy them.
-Until the initial pin is merged, `latest` is mutable and a pod restart can pull
-a newer image. No digest is fabricated before the first image is published.
+Flux's existing `map-apps` bundle includes `apps/docs`. The adoption command
+pins the first semantic release to its verified digest. Renovate proposes later
+version/digest updates; merge those PRs to deploy them.
 
 After merging, check the rollout and ingress:
 
