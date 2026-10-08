@@ -51,8 +51,7 @@ required. The Argo CD handover below is optional and only applies if the old
    Resolve failed preflight checks before continuing. A fresh Flux install still
    needs the application prerequisites in section 1: PostgreSQL, runtime secrets,
    ingress/TLS dependencies, and DNS pointing to the server. These are not installed
-   by Flux bootstrap. The tile-generator image was ARM64-only when checked; an
-   AMD64-only cluster needs a compatible image build before that Job can run.
+   by Flux bootstrap. The tile-generator Job is retired and is no longer deployed.
 
 4. Create namespaces and provision the runtime secrets described in section 1:
 
@@ -96,7 +95,7 @@ Git every minute. Workload reconciliation corrects drift every five minutes
 (ten minutes for namespaces, tile storage, and the generator), and also runs when
 new Git revisions arrive. Renovate opens PRs; merging a PR approves deployment.
 
-Five Flux Kustomizations own the existing stack:
+Four active workload bundles and one empty cleanup bundle are reconciled by Flux:
 
 | Bundle | Depends on | Purpose |
 | --- | --- | --- |
@@ -104,14 +103,32 @@ Five Flux Kustomizations own the existing stack:
 | tile-storage | namespaces | Create the retained tile PVC |
 | map-apps | tile-storage | Frontend, docs, scraper, Martin, tileserver |
 | monitoring | namespaces | Prometheus, Grafana, Loki, Promtail, VictoriaMetrics, exporters, Alertmanager |
-| tile-generator | tile-storage | Run the tile generation Job |
+| tile-generator | — | Empty cleanup bundle: prune the retired generator Job |
 
 Tile storage uses `wait: false`: K3s local-path provisioning can wait for a consumer
-before binding the PVC. Requiring Bound before creating the generator would deadlock.
-The Job has a resource-level force annotation so an image change recreates its
-immutable pod template. A merged generator update runs generation again and can
-change data in `tiles-pvc`. No TTL is set on the completed Job, so Flux does not
-recreate it on each reconciliation.
+before binding the PVC. The tileserver remains scaled to zero, so the retained PVC
+may have no active consumer.
+
+The generator bundle now has `resources: []` and `prune: true`. On reconciliation,
+Flux removes the previously managed `lonctus/grid-tile-generator` Job and Kubernetes
+removes its dependent Pods (including names such as `grid-tile-generator-24pph`).
+The bundle is retained because deleting it with `deletionPolicy: Orphan` would
+leave the Job behind. Its `job.yaml` is an inactive reference, excluded from both
+Kustomize builds and Renovate. `tiles-pvc` remains managed separately and protected.
+
+After merging this change to `main`, reconcile and verify on the production cluster:
+
+```bash
+flux reconcile kustomization flux-system --with-source --context="$KUBE_CONTEXT"
+flux reconcile kustomization tile-generator --with-source --context="$KUBE_CONTEXT"
+kubectl --context="$KUBE_CONTEXT" -n lonctus get jobs,pods -l job-name=grid-tile-generator
+kubectl --context="$KUBE_CONTEXT" -n lonctus get job grid-tile-generator --ignore-not-found
+kubectl --context="$KUBE_CONTEXT" -n lonctus get pvc tiles-pvc
+```
+
+The generator queries should return no resources; the PVC should still exist.
+Once the cleanup bundle has reconciled and its inventory is empty on every cluster,
+it can be removed in a later Git change.
 
 Namespaces and PVCs are protected from pruning. Workloads have `deletionPolicy:
 Orphan`, so deleting a Flux Kustomization retains its workloads; removing a workload
@@ -238,8 +255,8 @@ kubectl --context="$KUBE_CONTEXT" -n lonctus get pods,svc,ingress,pvc
 kubectl --context="$KUBE_CONTEXT" -n monitoring get pods,pvc
 ```
 
-All five workload bundles should become Ready. The generator may take up to thirty
-minutes; the tileserver Deployment remains at `replicas: 0`. Keep Argo CD installed
+All five bundles, including the empty generator cleanup bundle, should become Ready.
+The tileserver Deployment remains at `replicas: 0`. Keep Argo CD installed
 if it manages other applications. This repository only replaces its own Application.
 
 ## 4. Enable Renovate in GitHub
@@ -272,8 +289,7 @@ Frontend, docs, and scraper accept stable `MAJOR.MINOR.PATCH` image versions.
 Renovate pins digests and proposes subsequent version upgrades. Existing `latest`
 references retain their legacy digest tracking until the first semantic release
 is adopted using section 5. Other images keep their existing version policies;
-the tile generator still tracks `latest` because its producer is outside this
-workspace. Envoy sidecars update together. Major third-party upgrades require
+the retired tile-generator manifest is excluded from Renovate. Envoy sidecars update together. Major third-party upgrades require
 approval in the Dependency Dashboard. Automatic merge is disabled.
 
 Use branch protection/rulesets to require **manifests** and **renovate-config**
@@ -315,8 +331,7 @@ Renovate then proposes later stable releases and digest changes; Flux deploys
 merged updates. A temporary rule keeps legacy `latest` references on digest
 tracking until adoption; a notification does not migrate those references.
 
-`kaljo14/grid-tile-generator:latest` remains on the old policy. Its publishing
-source is absent from this workspace and must be migrated separately.
+The retired `grid-tile-generator` is no longer deployed or tracked for image updates.
 
 For prompt detection, add this step **after the successful image push** in each
 producer repository's GitHub Actions workflow. Create `MAP_INFRA_DISPATCH_TOKEN`
@@ -409,8 +424,8 @@ flux logs --level=error --context="$KUBE_CONTEXT"
 ```
 
 Revert a merged image PR to roll back to its previous digest. Keep old digests in
-your registry so they remain pullable. Reverting a generator image reruns the Job;
-it does not restore previous PVC data. ConfigMaps retain their existing names and
+your registry so they remain pullable. The retired generator is not rerun by image updates; reverting an image cannot
+restore previous PVC data. ConfigMaps retain their existing names and
 mount behavior; services that load configuration only at startup need a rollout
 when configuration changes (for example, change a pod-template annotation in Git).
 

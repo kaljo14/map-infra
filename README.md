@@ -15,7 +15,7 @@ Frontend, docs, and GeoPulse releases publish stable `MAJOR.MINOR.PATCH` image
 tags. Renovate updates versioned images and pins their digests; automatic merging
 is disabled. Existing `latest` references are retained until a real published
 release is adopted with `python3 scripts/adopt-release.py <app> <version>`.
-The tile-generator producer is outside this workspace and still tracks `latest`.
+The tile-generator Job is retired; its empty Flux bundle removes existing generator Jobs and Pods while retaining tile storage.
 See the semantic-release migration in [DEPLOYMENT.md](DEPLOYMENT.md).
 
 ## Services
@@ -39,12 +39,12 @@ and `data-editor`. The tileserver Deployment remains intentionally scaled to zer
 ```text
 clusters/production/          Flux entrypoint and reconciliation graph
   flux-system/               Generated Flux controllers and Git source
-  workloads.yaml             Namespaces, storage, apps, monitoring, generator
+  workloads.yaml             Namespaces, storage, apps, monitoring, generator cleanup
 infrastructure/namespaces/   lonctus and monitoring namespaces
 apps/                       Application Kustomize bundle
   frontend/, docs/, places-scraper/, martin/, tileserver/
   tileserver/storage/        Retained shared tile PVC
-  tileserver/generator/      Image-driven tile generation Job
+  tileserver/generator/      Empty cleanup bundle; inactive Job reference
   monitoring/               Separate monitoring Kustomize bundle
 .github/workflows/           Renovate runner and pull request validation
 renovate.json                Image, Flux and tooling update policy

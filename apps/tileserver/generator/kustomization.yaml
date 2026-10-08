@@ -1,8 +1,9 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: lonctus
-resources:
-  - job.yaml
+# Keep this bundle empty so Flux prunes the previously managed generator Job.
+# job.yaml is retained only as an inactive reference, not a deployed resource.
+resources: []
 labels:
   - pairs:
       managed-by: kustomize
