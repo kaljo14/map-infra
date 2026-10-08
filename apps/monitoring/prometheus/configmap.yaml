@@ -6,8 +6,9 @@ metadata:
 data:
   prometheus.yml: |
     global:
-      scrape_interval: 30s
-      evaluation_interval: 30s
+      # Reduce sample ingestion and rule evaluation on the SD-backed Pi.
+      scrape_interval: 60s
+      evaluation_interval: 60s
       external_labels:
         cluster: lonctus-prod
 
@@ -125,4 +126,3 @@ data:
             target_label: instance
           - target_label: __address__
             replacement: blackbox-exporter.monitoring.svc.cluster.local:9115
-

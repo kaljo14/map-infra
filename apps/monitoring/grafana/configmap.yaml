@@ -13,7 +13,7 @@ data:
         isDefault: true
         access: proxy
         jsonData:
-          timeInterval: 30s
+          timeInterval: 60s
       - name: Loki
         type: loki
         url: http://loki.monitoring.svc.cluster.local:3100

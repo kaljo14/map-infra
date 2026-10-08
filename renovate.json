@@ -20,6 +20,7 @@
       "matchDatasources": ["docker"],
       "matchPackageNames": [
         "kaljo14/my-map",
+        "kaljo14/docs",
         "kaljo14/places-scraper",
         "kaljo14/grid-tile-generator"
       ],

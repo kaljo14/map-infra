@@ -1,5 +1,94 @@
 # Flux CD deployment and Renovate image updates
 
+## Fresh Flux installation on Ubuntu
+
+Use this path when there is no working GitOps installation to migrate. Flux
+bootstrap installs its own controllers; an existing Flux installation is not
+required. The Argo CD handover below is optional and only applies if the old
+`map-infra` Application still exists, including an Application from a failed setup.
+
+1. Ensure this repository's Flux configuration is pushed and merged into `main`.
+   If an old Argo Application still watches `main`, detach it using section 2
+   before merging. A failed installation does not necessarily remove its controller.
+2. SSH into the Ubuntu server and install the command-line tools:
+
+   ```bash
+   sudo apt-get update
+   sudo apt-get install -y curl git jq
+   ```
+
+   If this server has **no K3s installation**, install a single-node K3s server:
+
+   ```bash
+   curl -fsSL https://get.k3s.io -o /tmp/install-k3s.sh
+   sudo sh /tmp/install-k3s.sh
+   ```
+
+   An existing K3s cluster can be used directly. Configure access for your user:
+
+   ```bash
+   mkdir -p "$HOME/.kube"
+   sudo install -m 600 -o "$(id -u)" -g "$(id -g)" \
+     /etc/rancher/k3s/k3s.yaml "$HOME/.kube/map-infra.yaml"
+   export KUBECONFIG="$HOME/.kube/map-infra.yaml"
+   export KUBE_CONTEXT="$(kubectl config current-context)"
+   kubectl --context="$KUBE_CONTEXT" get nodes -o wide
+   ```
+
+3. Clone the configuration (or pull `main` in your existing checkout), then install
+   the same Flux CLI version as the committed controllers:
+
+   ```bash
+   git clone --branch main https://github.com/kaljo14/map-infra.git
+   cd map-infra
+   flux_version=$(sed -n 's/^# Flux Version: v//p' \
+     clusters/production/flux-system/gotk-components.yaml)
+   curl -fsSL https://fluxcd.io/install.sh -o /tmp/install-flux.sh
+   sudo env FLUX_VERSION="$flux_version" bash /tmp/install-flux.sh
+   flux check --pre --context="$KUBE_CONTEXT"
+   ```
+
+   Resolve failed preflight checks before continuing. A fresh Flux install still
+   needs the application prerequisites in section 1: PostgreSQL, runtime secrets,
+   ingress/TLS dependencies, and DNS pointing to the server. These are not installed
+   by Flux bootstrap. The tile-generator image was ARM64-only when checked; an
+   AMD64-only cluster needs a compatible image build before that Job can run.
+
+4. Create namespaces and provision the runtime secrets described in section 1:
+
+   ```bash
+   kubectl --context="$KUBE_CONTEXT" apply -k infrastructure/namespaces
+   ```
+
+5. Create a GitHub bootstrap token scoped to `kaljo14/map-infra` with Contents and
+   Administration read/write access, and enter it at the terminal prompt:
+
+   ```bash
+   read -rsp 'GitHub bootstrap token: ' GITHUB_TOKEN
+   echo
+   export GITHUB_TOKEN
+   bash scripts/bootstrap-flux.sh "$KUBE_CONTEXT"
+   unset GITHUB_TOKEN
+   ```
+
+   This installs Flux and starts reconciling the application manifests from `main`.
+   If the script reports an old Argo Application, perform the optional cleanup in
+   section 2 and rerun this command.
+
+6. Verify the installation, then enable Renovate using section 4:
+
+   ```bash
+   flux check --context="$KUBE_CONTEXT"
+   flux get sources git --context="$KUBE_CONTEXT"
+   flux get kustomizations --context="$KUBE_CONTEXT"
+   kubectl --context="$KUBE_CONTEXT" -n lonctus get pods,pvc
+   kubectl --context="$KUBE_CONTEXT" -n monitoring get pods,pvc
+   ```
+
+   Renovate runs in GitHub Actions and requires the `RENOVATE_TOKEN` repository
+   secret. It does not need to be installed on Ubuntu. Run its workflow manually
+   once to verify registry access and pull request creation.
+
 ## What is managed
 
 Flux reads `kaljo14/map-infra`, branch `main`, path `clusters/production`. It polls
@@ -13,7 +102,7 @@ Five Flux Kustomizations own the existing stack:
 | --- | --- | --- |
 | namespaces | — | lonctus and monitoring |
 | tile-storage | namespaces | Create the retained tile PVC |
-| map-apps | tile-storage | Frontend, scraper, Martin, tileserver |
+| map-apps | tile-storage | Frontend, docs, scraper, Martin, tileserver |
 | monitoring | namespaces | Prometheus, Grafana, Loki, Promtail, VictoriaMetrics, exporters, Alertmanager |
 | tile-generator | tile-storage | Run the tile generation Job |
 
@@ -61,7 +150,37 @@ a build-time setting, not a runtime Secret. Private container registries also
 require Kubernetes image pull credentials; Renovate's registry credentials do not
 provide credentials to cluster nodes.
 
-## 2. Hand over from Argo CD
+For a fresh installation, create missing secrets from local files outside the Git
+checkout. Make a private directory first:
+
+```bash
+install -d -m 700 "$HOME/.config/map-infra"
+```
+
+Use your editor to create these files with real values, one `KEY=value` per line
+(without shell `export` prefixes):
+
+- `places.env`: `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, and
+  `POSTGRES_CONN_STRING`. The connection string must reach your provisioned database.
+- `scraper.env`: `GOOGLE_PLACES_API_KEY`.
+- `smtp.env`: `smtp-password`.
+
+Then create the missing secrets:
+
+```bash
+chmod 600 "$HOME/.config/map-infra/places.env" \
+  "$HOME/.config/map-infra/scraper.env" "$HOME/.config/map-infra/smtp.env"
+kubectl --context="$KUBE_CONTEXT" -n lonctus create secret generic places-scraper-secret \
+  --from-env-file="$HOME/.config/map-infra/places.env"
+kubectl --context="$KUBE_CONTEXT" -n lonctus create secret generic scraper-gg-secret \
+  --from-env-file="$HOME/.config/map-infra/scraper.env"
+kubectl --context="$KUBE_CONTEXT" -n monitoring create secret generic alertmanager-smtp \
+  --from-env-file="$HOME/.config/map-infra/smtp.env"
+```
+
+Skip creation for secrets that already exist with valid values.
+
+## 2. Optional: hand over from an existing Argo CD Application
 
 Do this **before merging the migration to main**, while the old Argo Application
 still points at the old tree. Save its configuration, turn off automatic sync, then
@@ -165,6 +284,7 @@ to `main`; the repository configuration alone does not enforce GitHub branch rul
 The application images currently track these Docker Hub tags:
 
 - `kaljo14/my-map:latest`
+- `kaljo14/docs:latest`
 - `kaljo14/places-scraper:latest`
 - `kaljo14/grid-tile-generator:latest`
 
@@ -193,6 +313,66 @@ repository and must receive the step themselves. The schedule remains a fallback
 if a notification is missed. Multiple pushes before a scan/merge can be combined
 into one open PR for the most recent digest; this is not one PR per push.
 
+## Docs site at docs.lonctus.com
+
+The `kaljo14/docs` repository builds the internal docs image for AMD64 and ARM64.
+Set its Actions secrets `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` with push access
+to `kaljo14/docs`; optionally set `MAP_INFRA_DISPATCH_TOKEN` as described above.
+Create the Docker Hub repository first. Prefer a private repository because the
+image contains the internal documentation; the ingress password does not protect
+files downloaded directly from a public registry.
+
+Before merging `apps/docs` into `main`:
+
+1. Run the docs workflow on `main` and verify `kaljo14/docs:latest` was published.
+2. Point the DNS `A` record for `docs.lonctus.com` at the production ingress IP.
+   Add an `AAAA` record only if IPv6 reaches that ingress too. DNS is managed
+   outside this repository. Ensure ports 80/443 reach Traefik and the
+   `letsencrypt-prod` ClusterIssuer is Ready.
+3. Provision the BasicAuth secret in `lonctus`. The docs HTTPS ingress uses
+   Traefik's `websecure` entrypoint and `traefik.io/v1alpha1` Middleware CRD.
+   All pages, assets, and search endpoints require authentication. Use `htpasswd`
+   (from `apache2-utils` on Ubuntu) to prompt for a password without putting it
+   in command history:
+
+   ```bash
+   install -d -m 700 "$HOME/.config/map-infra"
+   (umask 077; htpasswd -cB "$HOME/.config/map-infra/docs-users" docs)
+   kubectl --context="$KUBE_CONTEXT" -n lonctus create secret generic docs-basic-auth \
+     --from-file=users="$HOME/.config/map-infra/docs-users" \
+     --dry-run=client -o yaml | kubectl --context="$KUBE_CONTEXT" apply -f -
+   ```
+
+4. If the image is private, configure `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN`
+   in map-infra for Renovate's read access, and create a cluster pull secret from
+   a private Docker config file with pull-only credentials:
+
+   ```bash
+   kubectl --context="$KUBE_CONTEXT" -n lonctus create secret generic docs-registry \
+     --type=kubernetes.io/dockerconfigjson \
+     --from-file=.dockerconfigjson="$HOME/.config/map-infra/docs-docker-config.json"
+   ```
+
+   Add `imagePullSecrets: [{name: docs-registry}]` under the docs Deployment's
+   `spec.template.spec` before merging. Omit it for a public image. Registry and
+   BasicAuth credentials must never be committed to Git.
+
+Flux's existing `map-apps` bundle includes `apps/docs`. Renovate proposes the
+initial digest pin and subsequent updates; merge those PRs to deploy them.
+Until the initial pin is merged, `latest` is mutable and a pod restart can pull
+a newer image. No digest is fabricated before the first image is published.
+
+After merging, check the rollout and ingress:
+
+```bash
+flux reconcile kustomization map-apps --with-source --context="$KUBE_CONTEXT"
+kubectl --context="$KUBE_CONTEXT" -n lonctus rollout status deployment/docs
+kubectl --context="$KUBE_CONTEXT" -n lonctus get ingress docs
+kubectl --context="$KUBE_CONTEXT" -n lonctus get certificate docs-tls
+curl -I https://docs.lonctus.com/           # Expect 401 without credentials
+curl --fail --user docs https://docs.lonctus.com/  # Prompts for the password
+```
+
 ## Operations and rollback
 
 Change manifests in Git and merge a PR. To reconcile immediately:
@@ -217,6 +397,9 @@ the parent is active, because the parent can recreate them.
 
 ## References
 
+- [K3s installation](https://docs.k3s.io/quick-start)
+- [K3s cluster access](https://docs.k3s.io/cluster-access)
+- [Flux CLI installation](https://fluxcd.io/flux/installation/)
 - [Flux GitHub bootstrap](https://fluxcd.io/flux/installation/bootstrap/github/)
 - [Flux reconciliation, health and pruning](https://fluxcd.io/flux/components/kustomize/kustomizations/)
 - [Argo CD non-cascading Application deletion](https://argo-cd.readthedocs.io/en/stable/user-guide/app_deletion/)

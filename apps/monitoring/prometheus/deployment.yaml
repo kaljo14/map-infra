@@ -24,6 +24,9 @@ spec:
       app: prometheus
   template:
     metadata:
+      annotations:
+        # The config is mounted with subPath and needs a new Pod to take effect.
+        monitoring.lonctus.com/config-revision: "scrape-60s-v1"
       labels:
         app: prometheus
     spec:

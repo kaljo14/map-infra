@@ -20,6 +20,7 @@ is disabled. A pending PR may be updated with subsequent pushes.
 | Service | Namespace | Endpoint |
 | --- | --- | --- |
 | Frontend | lonctus | lonctus.com |
+| Internal docs | lonctus | docs.lonctus.com (password protected) |
 | Places scraper | lonctus | places-scraper.lonctus.com |
 | Martin | lonctus | martin.lonctus.com |
 | Tileserver | lonctus | tiles.lonctus.com |
@@ -38,7 +39,7 @@ clusters/production/          Flux entrypoint and reconciliation graph
   workloads.yaml             Namespaces, storage, apps, monitoring, generator
 infrastructure/namespaces/   lonctus and monitoring namespaces
 apps/                       Application Kustomize bundle
-  frontend/, places-scraper/, martin/, tileserver/
+  frontend/, docs/, places-scraper/, martin/, tileserver/
   tileserver/storage/        Retained shared tile PVC
   tileserver/generator/      Image-driven tile generation Job
   monitoring/               Separate monitoring Kustomize bundle
@@ -49,11 +50,16 @@ scripts/validate.py          Offline graph, schema and resource validation
 kustomization.yaml          Combined workload preview
 ```
 
-See [DEPLOYMENT.md](DEPLOYMENT.md) for the Argo CD handover, GitHub credentials,
-image-push trigger, bootstrap, and rollback. Committing configuration alone does
+Start with [Fresh Flux installation on Ubuntu](DEPLOYMENT.md#fresh-flux-installation-on-ubuntu).
+The guide also covers runtime secrets, GitHub credentials, the image-push trigger,
+and optional Argo CD cleanup. Committing configuration alone does
 not install Flux or authorize Renovate: complete that setup to activate them.
 
 ## Local validation
+
+For an overloaded Raspberry Pi using SD storage, see
+[SD-card performance](docs/sd-card-performance.md) for reduced collection settings
+and a reversible procedure to pause metrics ingestion.
 
 Install `kubectl`, the Flux CLI version recorded in `gotk-components.yaml`, and
 Python 3, then run:
