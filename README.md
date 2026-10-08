@@ -23,7 +23,7 @@ See the semantic-release migration in [DEPLOYMENT.md](DEPLOYMENT.md).
 | Service | Namespace | Endpoint |
 | --- | --- | --- |
 | Frontend | lonctus | lonctus.com |
-| Internal docs | lonctus | docs.lonctus.com (password protected) |
+| Internal docs | lonctus | docs.lonctus.com (Clerk sign-in) |
 | Places scraper | lonctus | places-scraper.lonctus.com |
 | Martin | lonctus | martin.lonctus.com |
 | Tileserver | lonctus | tiles.lonctus.com |

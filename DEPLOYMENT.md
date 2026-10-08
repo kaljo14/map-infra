@@ -358,7 +358,7 @@ The `kaljo14/docs` repository builds the internal docs image for AMD64 and ARM64
 Set its Actions secrets `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` with push access
 to `kaljo14/docs`; optionally set `MAP_INFRA_DISPATCH_TOKEN` as described above.
 Create the Docker Hub repository first. Prefer a private repository because the
-image contains the internal documentation; the ingress password does not protect
+image contains the internal documentation; app sign-in does not protect
 files downloaded directly from a public registry.
 
 Before merging `apps/docs` into `main`:
@@ -369,18 +369,24 @@ Before merging `apps/docs` into `main`:
    Add an `AAAA` record only if IPv6 reaches that ingress too. DNS is managed
    outside this repository. Ensure ports 80/443 reach Traefik and the
    `letsencrypt-prod` ClusterIssuer is Ready.
-3. Provision the BasicAuth secret in `lonctus`. The docs HTTPS ingress uses
-   Traefik's `websecure` entrypoint and `traefik.io/v1alpha1` Middleware CRD.
-   All pages, assets, and search endpoints require authentication. Use `htpasswd`
-   (from `apache2-utils` on Ubuntu) to prompt for a password without putting it
-   in command history:
+3. Configure `docs.lonctus.com` under the same Clerk production root domain as
+   the frontend, and set the docs repository variable `CLERK_PUBLISHABLE_KEY` to
+   that instance's publishable key before building the docs image. Provision the
+   runtime `docs-clerk` Secret in `lonctus` with that same publishable key and its
+   matching secret key. Read values interactively to keep them out of shell history:
 
    ```bash
-   install -d -m 700 "$HOME/.config/map-infra"
-   (umask 077; htpasswd -cB "$HOME/.config/map-infra/docs-users" docs)
-   kubectl --context="$KUBE_CONTEXT" -n lonctus create secret generic docs-basic-auth \
-     --from-file=users="$HOME/.config/map-infra/docs-users" \
+   printf 'Clerk publishable key: '
+   read -r -s DOCS_CLERK_PUBLISHABLE_KEY
+   echo
+   printf 'Clerk secret key: '
+   read -r -s DOCS_CLERK_SECRET_KEY
+   echo
+   kubectl --context="$KUBE_CONTEXT" -n lonctus create secret generic docs-clerk \
+     --from-literal=NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY="$DOCS_CLERK_PUBLISHABLE_KEY" \
+     --from-literal=CLERK_SECRET_KEY="$DOCS_CLERK_SECRET_KEY" \
      --dry-run=client -o yaml | kubectl --context="$KUBE_CONTEXT" apply -f -
+   unset DOCS_CLERK_PUBLISHABLE_KEY DOCS_CLERK_SECRET_KEY
    ```
 
 4. If the image is private, configure `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN`
@@ -395,11 +401,16 @@ Before merging `apps/docs` into `main`:
 
    Add `imagePullSecrets: [{name: docs-registry}]` under the docs Deployment's
    `spec.template.spec` before merging. Omit it for a public image. Registry and
-   BasicAuth credentials must never be committed to Git.
+   Clerk credentials must never be committed to Git.
 
 Flux's existing `map-apps` bundle includes `apps/docs`. The adoption command
 pins the first semantic release to its verified digest. Renovate proposes later
 version/digest updates; merge those PRs to deploy them.
+
+For an existing BasicAuth deployment, roll out the Clerk-protected docs image
+while the BasicAuth Middleware is still active. Verify sign-in on that image,
+then apply the ingress change that removes the Middleware. This avoids an
+interval where the old image is reachable without authentication.
 
 After merging, check the rollout and ingress:
 
@@ -408,8 +419,16 @@ flux reconcile kustomization map-apps --with-source --context="$KUBE_CONTEXT"
 kubectl --context="$KUBE_CONTEXT" -n lonctus rollout status deployment/docs
 kubectl --context="$KUBE_CONTEXT" -n lonctus get ingress docs
 kubectl --context="$KUBE_CONTEXT" -n lonctus get certificate docs-tls
-curl -I https://docs.lonctus.com/           # Expect 401 without credentials
-curl --fail --user docs https://docs.lonctus.com/  # Prompts for the password
+curl -I https://docs.lonctus.com/            # Expect a redirect to /sign-in
+curl -I https://docs.lonctus.com/api/search  # Expect 401 without a session
+```
+
+Open `https://docs.lonctus.com/` in a browser and verify that Clerk sign-in
+returns to the requested docs page. After the Clerk-protected image is serving
+successfully and the old Middleware is pruned, remove the old secret:
+
+```bash
+kubectl --context="$KUBE_CONTEXT" -n lonctus delete secret docs-basic-auth --ignore-not-found
 ```
 
 ## Operations and rollback
