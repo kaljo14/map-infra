@@ -3,16 +3,8 @@ kind: Ingress
 metadata:
   name: docs
   namespace: lonctus
-  annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-prod
-    traefik.ingress.kubernetes.io/router.entrypoints: websecure
-    traefik.ingress.kubernetes.io/router.tls: "true"
 spec:
   ingressClassName: traefik
-  tls:
-    - hosts:
-        - docs.lonctus.com
-      secretName: docs-tls
   rules:
     - host: docs.lonctus.com
       http:
@@ -23,4 +15,4 @@ spec:
               service:
                 name: docs
                 port:
-              number: 80
+                  number: 80
