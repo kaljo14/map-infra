@@ -11,7 +11,7 @@ spec:
     spec:
       containers:
       - name: generator
-        image: kaljo14/grid-tile-generator:latest
+        image: kaljo14/grid-tile-generator:latest@sha256:738686dfd9a5d0b49bbed4f1d30b45f01dca0b6cf8e27bf887115879730b3a9b
         volumeMounts:
         - name: tiles
           mountPath: /data
