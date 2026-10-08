@@ -20,6 +20,7 @@ is disabled. A pending PR may be updated with subsequent pushes.
 | Service | Namespace | Endpoint |
 | --- | --- | --- |
 | Frontend | lonctus | lonctus.com |
+| Internal docs | lonctus | docs.lonctus.com (password protected) |
 | Places scraper | lonctus | places-scraper.lonctus.com |
 | Martin | lonctus | martin.lonctus.com |
 | Tileserver | lonctus | tiles.lonctus.com |
@@ -38,7 +39,7 @@ clusters/production/          Flux entrypoint and reconciliation graph
   workloads.yaml             Namespaces, storage, apps, monitoring, generator
 infrastructure/namespaces/   lonctus and monitoring namespaces
 apps/                       Application Kustomize bundle
-  frontend/, places-scraper/, martin/, tileserver/
+  frontend/, docs/, places-scraper/, martin/, tileserver/
   tileserver/storage/        Retained shared tile PVC
   tileserver/generator/      Image-driven tile generation Job
   monitoring/               Separate monitoring Kustomize bundle
