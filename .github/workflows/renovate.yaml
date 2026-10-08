@@ -38,7 +38,7 @@ jobs:
           configurationFile: .github/renovate.cjs
           token: ${{ secrets.RENOVATE_TOKEN }}
           # Pin the bot itself; the github-actions manager updates this version.
-          renovate-version: 44.145.1
+          renovate-version: 44.145.2
           env-regex: '^(?:RENOVATE_\w+|LOG_LEVEL|GITHUB_REPOSITORY|DOCKERHUB_USERNAME|DOCKERHUB_TOKEN)$'
         env:
           GITHUB_REPOSITORY: ${{ github.repository }}
