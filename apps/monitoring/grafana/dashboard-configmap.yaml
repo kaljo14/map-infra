@@ -319,7 +319,7 @@ data:
           ]
         }
       ],
-      "refresh": "30s",
+      "refresh": "60s",
       "schemaVersion": 39,
       "tags": ["raspberry-pi", "infrastructure"],
       "templating": { "list": [] },
@@ -598,7 +598,7 @@ data:
           ]
         }
       ],
-      "refresh": "30s",
+      "refresh": "60s",
       "schemaVersion": 39,
       "tags": ["envoy", "loki", "access-logs"],
       "templating": { "list": [] },
@@ -982,7 +982,7 @@ data:
           ]
         }
       ],
-      "refresh": "30s",
+      "refresh": "60s",
       "schemaVersion": 39,
       "tags": ["RED", "envoy", "latency", "performance"],
       "templating": { "list": [] },
@@ -1238,7 +1238,7 @@ data:
           ]
         }
       ],
-      "refresh": "30s",
+      "refresh": "60s",
       "schemaVersion": 39,
       "tags": ["lonctus", "pods", "health"],
       "templating": { "list": [] },

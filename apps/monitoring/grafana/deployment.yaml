@@ -10,6 +10,8 @@ spec:
       app: grafana
   template:
     metadata:
+      annotations:
+        monitoring.lonctus.com/config-revision: "scrape-60s-v1"
       labels:
         app: grafana
     spec:

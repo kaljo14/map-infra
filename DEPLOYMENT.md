@@ -1,5 +1,94 @@
 # Flux CD deployment and Renovate image updates
 
+## Fresh Flux installation on Ubuntu
+
+Use this path when there is no working GitOps installation to migrate. Flux
+bootstrap installs its own controllers; an existing Flux installation is not
+required. The Argo CD handover below is optional and only applies if the old
+`map-infra` Application still exists, including an Application from a failed setup.
+
+1. Ensure this repository's Flux configuration is pushed and merged into `main`.
+   If an old Argo Application still watches `main`, detach it using section 2
+   before merging. A failed installation does not necessarily remove its controller.
+2. SSH into the Ubuntu server and install the command-line tools:
+
+   ```bash
+   sudo apt-get update
+   sudo apt-get install -y curl git jq
+   ```
+
+   If this server has **no K3s installation**, install a single-node K3s server:
+
+   ```bash
+   curl -fsSL https://get.k3s.io -o /tmp/install-k3s.sh
+   sudo sh /tmp/install-k3s.sh
+   ```
+
+   An existing K3s cluster can be used directly. Configure access for your user:
+
+   ```bash
+   mkdir -p "$HOME/.kube"
+   sudo install -m 600 -o "$(id -u)" -g "$(id -g)" \
+     /etc/rancher/k3s/k3s.yaml "$HOME/.kube/map-infra.yaml"
+   export KUBECONFIG="$HOME/.kube/map-infra.yaml"
+   export KUBE_CONTEXT="$(kubectl config current-context)"
+   kubectl --context="$KUBE_CONTEXT" get nodes -o wide
+   ```
+
+3. Clone the configuration (or pull `main` in your existing checkout), then install
+   the same Flux CLI version as the committed controllers:
+
+   ```bash
+   git clone --branch main https://github.com/kaljo14/map-infra.git
+   cd map-infra
+   flux_version=$(sed -n 's/^# Flux Version: v//p' \
+     clusters/production/flux-system/gotk-components.yaml)
+   curl -fsSL https://fluxcd.io/install.sh -o /tmp/install-flux.sh
+   sudo env FLUX_VERSION="$flux_version" bash /tmp/install-flux.sh
+   flux check --pre --context="$KUBE_CONTEXT"
+   ```
+
+   Resolve failed preflight checks before continuing. A fresh Flux install still
+   needs the application prerequisites in section 1: PostgreSQL, runtime secrets,
+   ingress/TLS dependencies, and DNS pointing to the server. These are not installed
+   by Flux bootstrap. The tile-generator image was ARM64-only when checked; an
+   AMD64-only cluster needs a compatible image build before that Job can run.
+
+4. Create namespaces and provision the runtime secrets described in section 1:
+
+   ```bash
+   kubectl --context="$KUBE_CONTEXT" apply -k infrastructure/namespaces
+   ```
+
+5. Create a GitHub bootstrap token scoped to `kaljo14/map-infra` with Contents and
+   Administration read/write access, and enter it at the terminal prompt:
+
+   ```bash
+   read -rsp 'GitHub bootstrap token: ' GITHUB_TOKEN
+   echo
+   export GITHUB_TOKEN
+   bash scripts/bootstrap-flux.sh "$KUBE_CONTEXT"
+   unset GITHUB_TOKEN
+   ```
+
+   This installs Flux and starts reconciling the application manifests from `main`.
+   If the script reports an old Argo Application, perform the optional cleanup in
+   section 2 and rerun this command.
+
+6. Verify the installation, then enable Renovate using section 4:
+
+   ```bash
+   flux check --context="$KUBE_CONTEXT"
+   flux get sources git --context="$KUBE_CONTEXT"
+   flux get kustomizations --context="$KUBE_CONTEXT"
+   kubectl --context="$KUBE_CONTEXT" -n lonctus get pods,pvc
+   kubectl --context="$KUBE_CONTEXT" -n monitoring get pods,pvc
+   ```
+
+   Renovate runs in GitHub Actions and requires the `RENOVATE_TOKEN` repository
+   secret. It does not need to be installed on Ubuntu. Run its workflow manually
+   once to verify registry access and pull request creation.
+
 ## What is managed
 
 Flux reads `kaljo14/map-infra`, branch `main`, path `clusters/production`. It polls
@@ -61,7 +150,37 @@ a build-time setting, not a runtime Secret. Private container registries also
 require Kubernetes image pull credentials; Renovate's registry credentials do not
 provide credentials to cluster nodes.
 
-## 2. Hand over from Argo CD
+For a fresh installation, create missing secrets from local files outside the Git
+checkout. Make a private directory first:
+
+```bash
+install -d -m 700 "$HOME/.config/map-infra"
+```
+
+Use your editor to create these files with real values, one `KEY=value` per line
+(without shell `export` prefixes):
+
+- `places.env`: `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, and
+  `POSTGRES_CONN_STRING`. The connection string must reach your provisioned database.
+- `scraper.env`: `GOOGLE_PLACES_API_KEY`.
+- `smtp.env`: `smtp-password`.
+
+Then create the missing secrets:
+
+```bash
+chmod 600 "$HOME/.config/map-infra/places.env" \
+  "$HOME/.config/map-infra/scraper.env" "$HOME/.config/map-infra/smtp.env"
+kubectl --context="$KUBE_CONTEXT" -n lonctus create secret generic places-scraper-secret \
+  --from-env-file="$HOME/.config/map-infra/places.env"
+kubectl --context="$KUBE_CONTEXT" -n lonctus create secret generic scraper-gg-secret \
+  --from-env-file="$HOME/.config/map-infra/scraper.env"
+kubectl --context="$KUBE_CONTEXT" -n monitoring create secret generic alertmanager-smtp \
+  --from-env-file="$HOME/.config/map-infra/smtp.env"
+```
+
+Skip creation for secrets that already exist with valid values.
+
+## 2. Optional: hand over from an existing Argo CD Application
 
 Do this **before merging the migration to main**, while the old Argo Application
 still points at the old tree. Save its configuration, turn off automatic sync, then
@@ -278,6 +397,9 @@ the parent is active, because the parent can recreate them.
 
 ## References
 
+- [K3s installation](https://docs.k3s.io/quick-start)
+- [K3s cluster access](https://docs.k3s.io/cluster-access)
+- [Flux CLI installation](https://fluxcd.io/flux/installation/)
 - [Flux GitHub bootstrap](https://fluxcd.io/flux/installation/bootstrap/github/)
 - [Flux reconciliation, health and pruning](https://fluxcd.io/flux/components/kustomize/kustomizations/)
 - [Argo CD non-cascading Application deletion](https://argo-cd.readthedocs.io/en/stable/user-guide/app_deletion/)
