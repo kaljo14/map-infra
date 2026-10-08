@@ -32,7 +32,7 @@ spec:
               mountPath: /etc/alertmanager
       containers:
         - name: alertmanager
-          image: prom/alertmanager:v0.27.0
+          image: prom/alertmanager:v0.34.1@sha256:e9733bafb1bdef9b00e25a21f8f99dc26a22224bf16641ad754d1649f4c3357a
           args:
             - --config.file=/etc/alertmanager/alertmanager.yml
             - --storage.path=/alertmanager
