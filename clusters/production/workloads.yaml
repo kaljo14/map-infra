@@ -59,15 +59,15 @@ metadata:
   name: tile-generator
   namespace: flux-system
 spec:
-  dependsOn:
-    - name: tile-storage
+  # Retained as an empty cleanup bundle to prune the old Job and its Pods.
+  # Deleting this Kustomization with deletionPolicy: Orphan would leave them behind.
   interval: 10m
   retryInterval: 1m
-  timeout: 30m
+  timeout: 2m
   path: ./apps/tileserver/generator
   prune: true
   deletionPolicy: Orphan
-  wait: true
+  wait: false
   sourceRef:
     kind: GitRepository
     name: flux-system
@@ -87,7 +87,7 @@ spec:
   prune: false
   deletionPolicy: Orphan
   # K3s local-path volumes bind only after a consumer Pod is scheduled.
-  # Waiting for Bound would block the generator that binds this PVC.
+  # The tileserver is scaled to zero, so no active consumer may bind this PVC.
   wait: false
   sourceRef:
     kind: GitRepository

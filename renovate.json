@@ -22,7 +22,8 @@
     ]
   },
   "ignorePaths": [
-    "**/secret-placeholder.yaml"
+    "**/secret-placeholder.yaml",
+    "apps/tileserver/generator/job.yaml"
   ],
   "automerge": false,
   "dependencyDashboard": true,
@@ -60,19 +61,6 @@
       "versioning": "docker",
       "allowedVersions": "/^latest$/",
       "pinDigests": true
-    },
-    {
-      "description": "Tile generator producer is outside this workspace and still publishes latest",
-      "matchDatasources": [
-        "docker"
-      ],
-      "matchPackageNames": [
-        "kaljo14/grid-tile-generator"
-      ],
-      "allowedVersions": "/^latest$/",
-      "pinDigests": true,
-      "groupName": null,
-      "minimumReleaseAge": "0 days"
     },
     {
       "description": "Update all Envoy sidecars together",

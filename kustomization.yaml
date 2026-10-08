@@ -5,5 +5,4 @@ resources:
   - apps/tileserver/storage
   - apps
   - apps/monitoring
-  - apps/tileserver/generator
 # Offline workload preview; Flux reconciles each bundle separately.
