@@ -26,7 +26,7 @@ def identity(doc):
 
 def main():
     # Parse even excluded examples, so malformed YAML cannot hide outside a bundle.
-    for parent in ("apps", "infrastructure", "clusters", ".github/workflows"):
+    for parent in ("apps", "infrastructure", "clusters", "operations", ".github/workflows"):
         for path in (ROOT / parent).rglob("*.yaml"):
             documents(path.read_text())
 
@@ -81,6 +81,9 @@ def main():
     namespaces = {doc["metadata"]["name"] for doc in workloads if doc["kind"] == "Namespace"}
     for doc in workloads:
         kind, meta = doc["kind"], doc["metadata"]
+        schema = schemas.get((doc["apiVersion"], kind))
+        if schema:
+            jsonschema.Draft7Validator(schema).validate(doc)
         assert kind != "Secret", "Plaintext Secret included in reconciliation"
         if kind not in ("Namespace", "ClusterRole", "ClusterRoleBinding"):
             assert meta.get("namespace") in namespaces, f"Missing namespace: {identity(doc)}"
@@ -88,6 +91,24 @@ def main():
             assert meta.get("annotations", {}).get("kustomize.toolkit.fluxcd.io/prune") == "disabled", (
                 f"Unprotected persistent resource: {identity(doc)}"
             )
+        if kind == "HelmRelease" and meta["name"] == "postgres":
+            spec = doc["spec"]
+            assert spec["releaseName"] == "postgres"
+            assert spec["targetNamespace"] == spec["storageNamespace"] == "database"
+            assert spec["values"]["image"]["digest"].startswith("sha256:")
+            assert meta["annotations"]["kustomize.toolkit.fluxcd.io/prune"] == "disabled"
+            assert spec["upgrade"]["remediation"]["retries"] == 0
+            if not spec.get("suspend", False):
+                assert meta["annotations"].get("database.lonctus.com/postgis-image-verified") == "true", (
+                    "Test the permanent PostGIS image before enabling PostgreSQL reconciliation"
+                )
+                assert spec["values"]["image"]["repository"] != "bitnami/postgresql", (
+                    "The original Bitnami image does not contain the manually installed PostGIS"
+                )
+        if kind == "CronJob" and meta["name"] == "postgres-backup":
+            spec = doc["spec"]
+            image = spec["jobTemplate"]["spec"]["template"]["spec"]["containers"][0]["image"]
+            assert spec["suspend"] or "adoption-required" not in image, "Publish backup image before enabling"
     print(f"Validated {len(bundles)} Flux bundles and {len(workloads)} workloads; "
           "schemas, dependencies, namespaces, ownership and storage protection passed.")
 

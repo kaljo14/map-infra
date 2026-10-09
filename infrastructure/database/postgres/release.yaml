@@ -1,0 +1,53 @@
+# Existing production release verified 2026-10-09. Follow docs/postgresql.md.
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: postgres
+  namespace: database
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
+    database.lonctus.com/postgis-image-verified: "false"
+spec:
+  suspend: true
+  interval: 30m
+  timeout: 15m
+  releaseName: postgres
+  targetNamespace: database
+  storageNamespace: database
+  maxHistory: 10
+  chart:
+    spec:
+      chart: postgresql
+      version: "18.1.11"
+      sourceRef:
+        kind: HelmRepository
+        name: bitnami
+        namespace: database
+  # Stop on failure; never automatically uninstall or roll the database back.
+  install:
+    remediation:
+      retries: 0
+      remediateLastFailure: false
+  upgrade:
+    force: false
+    cleanupOnFail: false
+    remediation:
+      retries: 0
+      remediateLastFailure: false
+  driftDetection:
+    mode: warn
+  # Exact exported values are kept out of Git; public version overrides go below.
+  valuesFrom:
+    - kind: Secret
+      name: postgres-helm-values
+      valuesKey: values.yaml
+  values:
+    # INVENTORY BASELINE ONLY: this image lacks the manually installed PostGIS.
+    # Replace with the tested postgres/Dockerfile image BEFORE unsuspending.
+    image:
+      registry: registry-1.docker.io
+      repository: bitnami/postgresql
+      tag: latest
+      digest: sha256:4237ea262ad7aa0fdbb5f04015581cc6372aecb6741cce97ddaca3fe51ebeceb
+    auth:
+      existingSecret: postgres-auth-secret

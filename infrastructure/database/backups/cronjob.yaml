@@ -1,0 +1,76 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: postgres-backup
+  namespace: database
+spec:
+  # Enable in Git only after image publication, credentials, init and a restore drill.
+  suspend: true
+  schedule: "15 2 * * *"
+  timeZone: Etc/UTC
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 3600
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      activeDeadlineSeconds: 14400
+      ttlSecondsAfterFinished: 604800
+      template:
+        metadata:
+          labels:
+            app: postgres-backup
+        spec:
+          automountServiceAccountToken: false
+          restartPolicy: Never
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 10001
+            runAsGroup: 10001
+            fsGroup: 10001
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: backup
+              # Publish the workflow's immutable commit tag and replace this first.
+              image: ghcr.io/kaljo14/map-infra-postgres-backup:adoption-required
+              args: [backup]
+              envFrom:
+                - configMapRef:
+                    name: postgres-backup-config
+                - secretRef:
+                    name: postgres-backup-storage
+              env:
+                - name: PGPASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: postgres-auth-secret
+                      key: postgres-password
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop: [ALL]
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 128Mi
+                  ephemeral-storage: 1Gi
+                limits:
+                  cpu: "1"
+                  memory: 768Mi
+                  ephemeral-storage: 20Gi
+              volumeMounts:
+                - name: work
+                  mountPath: /work
+                - name: tmp
+                  mountPath: /tmp
+          volumes:
+            # Scratch only. Never mount or snapshot the live PGDATA directory.
+            - name: work
+              emptyDir:
+                sizeLimit: 18Gi
+            - name: tmp
+              emptyDir:
+                sizeLimit: 256Mi

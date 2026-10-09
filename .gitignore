@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+.venv/
+*.dump
+*.backup
+*.env.local
+postgres-private/

@@ -18,6 +18,43 @@ spec:
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
+  name: postgres
+  namespace: flux-system
+spec:
+  dependsOn:
+    - name: namespaces
+  interval: 10m
+  timeout: 5m
+  path: ./infrastructure/database/postgres
+  prune: false
+  deletionPolicy: Orphan
+  # The HelmRelease is deliberately suspended during adoption.
+  wait: false
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: postgres-backups
+  namespace: flux-system
+spec:
+  dependsOn:
+    - name: namespaces
+  interval: 10m
+  timeout: 5m
+  path: ./infrastructure/database/backups
+  prune: true
+  deletionPolicy: Orphan
+  wait: false
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
   name: map-apps
   namespace: flux-system
 spec:

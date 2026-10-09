@@ -1,0 +1,112 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: database-restore
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-restore
+  namespace: database-restore
+spec:
+  selector:
+    app: postgres-restore
+  ports:
+    - name: postgres
+      port: 5432
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres-restore
+  namespace: database-restore
+spec:
+  serviceName: postgres-restore
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres-restore
+  template:
+    metadata:
+      labels:
+        app: postgres-restore
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+        runAsGroup: 999
+        fsGroup: 999
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: postgres
+          image: ghcr.io/kaljo14/map-infra-postgres-restore:adoption-required
+          env:
+            - name: POSTGRES_USER
+              value: restore_admin
+            - name: POSTGRES_DB
+              value: postgres
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-restore-auth
+                  key: password
+            - name: PGDATA
+              value: /var/lib/postgresql/18/docker
+          ports:
+            - containerPort: 5432
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+          readinessProbe:
+            exec:
+              command: [pg_isready, -U, restore_admin, -d, postgres]
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+        annotations:
+          kustomize.toolkit.fluxcd.io/prune: disabled
+      spec:
+        accessModes: [ReadWriteOnce]
+        storageClassName: local-path
+        resources:
+          requests:
+            storage: 6Gi
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: postgres-restore
+  namespace: database-restore
+spec:
+  podSelector:
+    matchLabels:
+      app: postgres-restore
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: database
+          podSelector:
+            matchLabels:
+              app: postgres-backup
+      ports:
+        - protocol: TCP
+          port: 5432

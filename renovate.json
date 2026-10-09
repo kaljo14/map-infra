@@ -9,16 +9,19 @@
     "kustomize",
     "flux",
     "github-actions",
-    "pip_requirements"
+    "pip_requirements",
+    "dockerfile"
   ],
   "kubernetes": {
     "managerFilePatterns": [
-      "/^apps/.*\\.ya?ml$/"
+      "/^apps/.*\\.ya?ml$/",
+      "/^infrastructure/.*\\.ya?ml$/"
     ]
   },
   "flux": {
     "managerFilePatterns": [
-      "/^clusters/.*\\.ya?ml$/"
+      "/^clusters/.*\\.ya?ml$/",
+      "/^infrastructure/.*\\.ya?ml$/"
     ]
   },
   "ignorePaths": [
@@ -78,6 +81,41 @@
         "major"
       ],
       "dependencyDashboardApproval": true
+    },
+    {
+      "description": "Database chart and server image changes require the PostgreSQL upgrade runbook; latest digest changes can cross major versions",
+      "matchFileNames": [
+        "infrastructure/database/postgres/**"
+      ],
+      "enabled": false
+    },
+    {
+      "description": "Backup and recovery clients must remain on the production PostgreSQL major",
+      "matchManagers": [
+        "dockerfile"
+      ],
+      "matchPackageNames": [
+        "postgres"
+      ],
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "enabled": false
+    },
+    {
+      "description": "Backup binaries are published using reviewed immutable commit tags",
+      "matchPackageNames": [
+        "ghcr.io/kaljo14/map-infra-postgres-backup",
+        "ghcr.io/kaljo14/map-infra-postgres-restore"
+      ],
+      "enabled": false
+    },
+    {
+      "description": "Production database base and extension versions change only through a rehearsed upgrade",
+      "matchFileNames": [
+        "postgres/**"
+      ],
+      "enabled": false
     }
   ]
 }

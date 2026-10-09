@@ -1,0 +1,88 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: postgres-backup-metrics
+  namespace: database
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: postgres-backup-metrics
+  namespace: database
+rules:
+  - apiGroups: [batch]
+    resources: [cronjobs, jobs]
+    verbs: [list, watch]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: postgres-backup-metrics
+  namespace: database
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: postgres-backup-metrics
+subjects:
+  - kind: ServiceAccount
+    name: postgres-backup-metrics
+    namespace: database
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres-backup-metrics
+  namespace: database
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres-backup-metrics
+  template:
+    metadata:
+      labels:
+        app: postgres-backup-metrics
+    spec:
+      serviceAccountName: postgres-backup-metrics
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: metrics
+          image: registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.17.0
+          args:
+            - --namespaces=database
+            - --resources=cronjobs,jobs
+          ports:
+            - name: metrics
+              containerPort: 8080
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 96Mi
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-backup-metrics
+  namespace: database
+spec:
+  selector:
+    app: postgres-backup-metrics
+  ports:
+    - name: metrics
+      port: 8080
