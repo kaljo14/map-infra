@@ -26,7 +26,7 @@ spec:
     metadata:
       annotations:
         # The config is mounted with subPath and needs a new Pod to take effect.
-        monitoring.lonctus.com/config-revision: "scrape-60s-v1"
+        monitoring.lonctus.com/config-revision: "postgres-backups-v1"
       labels:
         app: prometheus
     spec:

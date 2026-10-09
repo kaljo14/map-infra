@@ -1,0 +1,31 @@
+name: Build permanent PostgreSQL PostGIS image
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+  packages: write
+jobs:
+  build:
+    # The verified production base digest is ARM64; build and test natively.
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - name: Build the existing server with permanent PostGIS libraries
+        run: docker build -t postgres-postgis:test postgres
+      - name: Verify extensions, MVT and restart persistence
+        run: |
+          docker run --rm -i --entrypoint /bin/bash postgres-postgis:test < postgres/smoke-test.sh
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Publish the tested image and record its digest
+        env:
+          SERVER_IMAGE: ghcr.io/${{ github.repository_owner }}/map-infra-postgres-postgis:sha-${{ github.sha }}
+        run: |
+          docker tag postgres-postgis:test "$SERVER_IMAGE"
+          docker push "$SERVER_IMAGE"
+          docker inspect --format '{{index .RepoDigests 0}}' "$SERVER_IMAGE" >> "$GITHUB_STEP_SUMMARY"

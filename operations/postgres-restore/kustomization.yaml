@@ -1,0 +1,6 @@
+# Manual recovery environment; deliberately excluded from Flux and the root preview.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: database-restore
+resources:
+  - server.yaml

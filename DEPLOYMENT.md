@@ -95,11 +95,13 @@ Git every minute. Workload reconciliation corrects drift every five minutes
 (ten minutes for namespaces, tile storage, and the generator), and also runs when
 new Git revisions arrive. Renovate opens PRs; merging a PR approves deployment.
 
-Four active workload bundles and one empty cleanup bundle are reconciled by Flux:
+Seven bundles include two staged database bundles and one empty cleanup bundle:
 
 | Bundle | Depends on | Purpose |
 | --- | --- | --- |
-| namespaces | — | lonctus and monitoring |
+| namespaces | — | lonctus, monitoring and database |
+| postgres | namespaces | Existing Helm release adoption; initially suspended |
+| postgres-backups | namespaces | R2 backup CronJob (initially suspended) and Job metrics |
 | tile-storage | namespaces | Create the retained tile PVC |
 | map-apps | tile-storage | Frontend, docs, scraper, Martin, tileserver |
 | monitoring | namespaces | Prometheus, Grafana, Loki, Promtail, VictoriaMetrics, exporters, Alertmanager |
@@ -149,8 +151,10 @@ flux check --pre --context="$KUBE_CONTEXT"
 
 The preflight checks whether your Kubernetes version supports this Flux release.
 Upgrade K3s first if it fails. Traefik, cert-manager, the ingress ClusterIssuer,
-the storage provisioner, and the external PostgreSQL database are prerequisites;
-the original repository did not install them.
+and the storage provisioner are prerequisites. The existing PostgreSQL release
+has a staged adoption configuration; follow [PostgreSQL and R2 setup](docs/postgresql.md)
+before enabling it. Its manually installed PostGIS must first be baked into a
+tested image. Backup activation is independent of database adoption.
 
 Preserve existing secrets. For a fresh cluster, create namespaces with
 `kubectl --context="$KUBE_CONTEXT" apply -k infrastructure/namespaces`, then provision:
@@ -255,7 +259,9 @@ kubectl --context="$KUBE_CONTEXT" -n lonctus get pods,svc,ingress,pvc
 kubectl --context="$KUBE_CONTEXT" -n monitoring get pods,pvc
 ```
 
-All five bundles, including the empty generator cleanup bundle, should become Ready.
+All seven Kustomizations, including the empty generator cleanup bundle, should become Ready.
+The PostgreSQL HelmRelease and backup CronJob remain suspended until their runbook
+activation steps are completed; these bundles intentionally use `wait: false`.
 The tileserver Deployment remains at `replicas: 0`. Keep Argo CD installed
 if it manages other applications. This repository only replaces its own Application.
 

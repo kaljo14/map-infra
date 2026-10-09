@@ -6,6 +6,45 @@ metadata:
 data:
   alerts.yml: |
     groups:
+      - name: postgres-backups
+        rules:
+          - alert: PostgresBackupOverdue
+            expr: |
+              (
+                time() - (
+                  kube_cronjob_status_last_successful_time{namespace="database",cronjob="postgres-backup"}
+                  or kube_cronjob_created{namespace="database",cronjob="postgres-backup"}
+                ) > 36 * 3600
+              )
+              and on(namespace,cronjob)
+              (kube_cronjob_spec_suspend{namespace="database",cronjob="postgres-backup"} == 0)
+            for: 15m
+            labels:
+              severity: critical
+            annotations:
+              summary: "PostgreSQL has no successful scheduled backup in 36 hours"
+              description: "Inspect database/postgres-backup Jobs and logs. Runbook: docs/postgresql.md."
+          - alert: PostgresBackupJobFailed
+            expr: kube_job_status_failed{namespace="database",job_name=~"postgres-(backup|restore|check|init)-.*"} > 0
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: "PostgreSQL operation {{ $labels.job_name }} failed"
+          - alert: PostgresBackupMetricsUnavailable
+            expr: up{job="postgres-backup-metrics"} == 0 or absent(up{job="postgres-backup-metrics"})
+            for: 15m
+            labels:
+              severity: warning
+            annotations:
+              summary: "PostgreSQL backup monitoring is unavailable"
+          - alert: PostgresBackupScheduleMissing
+            expr: absent(kube_cronjob_spec_suspend{namespace="database",cronjob="postgres-backup"})
+            for: 15m
+            labels:
+              severity: warning
+            annotations:
+              summary: "PostgreSQL backup CronJob is missing from monitoring"
       # =============================================
       # Pod Health — lonctus namespace
       # =============================================
