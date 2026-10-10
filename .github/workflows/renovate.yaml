@@ -17,7 +17,7 @@ concurrency:
 jobs:
   renovate:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v7.0.1
         with:
@@ -39,8 +39,8 @@ jobs:
           token: ${{ secrets.RENOVATE_TOKEN }}
           # Pin the bot itself; the github-actions manager updates this version.
           renovate-version: 44.148.4
-          env-regex: '^(?:RENOVATE_\w+|LOG_LEVEL|GITHUB_REPOSITORY|DOCKERHUB_USERNAME|DOCKERHUB_TOKEN)$'
+          env-regex: '^(?:RENOVATE_\w+|LOG_LEVEL|DOCKERHUB_USERNAME|DOCKERHUB_TOKEN)$'
         env:
-          GITHUB_REPOSITORY: ${{ github.repository }}
+          
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
           DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
