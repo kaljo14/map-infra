@@ -301,9 +301,14 @@ PostGIS, topology, Tiger, fuzzystrmatch, projection, vector tiles and restart
 persistence on a disposable server before publishing. Raster and SFCGAL are not
 built because neither is installed in the supplied production inventory.
 
+The pinned Bitnami base uses Photon OS, so dependencies are installed with `tdnf`.
+PROJ 9.6.2 is compiled from its checksum-verified upstream release because Photon
+5 does not package it. Its shared libraries and coordinate database are copied
+into the runtime image alongside PostGIS.
+
 This build is intentionally separate from backup publication. It requires the
-old base image to remain pullable, a Debian-based base with PostgreSQL development
-headers, and an ARM64 GitHub runner. Those properties still need confirmation by
+old base image to remain pullable, Photon OS packages via `tdnf`, PostgreSQL
+development headers, and an ARM64 GitHub runner. Those properties are checked by
 the build. If the build cannot fetch the base or its assumptions fail, **leave
 the HelmRelease suspended** and keep backups running. Inspect the build error;
 do not replace the base with `latest`. The validated separate recovery server is

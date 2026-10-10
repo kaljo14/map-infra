@@ -38,7 +38,13 @@ backup() {
     '{format:1,source:$source,client_major:$client,started_at:$started,roles:$roles,databases:[],files:{}}' > "$manifest"
   pg_dumpall -w --roles-only --file="$root/roles.sql"
   while read -r oid; do
-    db="$(jq -r --argjson oid "$oid" '.[] | select(.oid==$oid) | .name' <<< "$databases")"
+    # PostgreSQL serializes oid as a JSON string, not a JSON number.
+    # An empty PGDATABASE silently falls back to the connection default.
+    db="$(jq -er --arg oid "$oid" \
+      '[.[] | select((.oid | tostring)==$oid) | .name] |
+       if length == 1 and (.[0] | type == "string" and length > 0)
+       then .[0] else error("Missing or ambiguous database for OID: \($oid)") end' \
+      <<< "$databases")"
     filename="database-$oid.dump"
     extensions="$(sql "SELECT json_agg(e ORDER BY name) FROM
       (SELECT extname AS name,extversion AS version FROM pg_extension) e" "$db")"
@@ -136,6 +142,10 @@ restore() {
   while read -r filename; do
     [[ "$filename" =~ ^database-[0-9]+\.dump$ ]] || die 'Invalid database archive path'
     jq -e --arg file "$filename" '.files[$file] != null' "$manifest" >/dev/null || die 'Missing archive checksum'
+    jq -e --arg file "$filename" \
+      '[.databases[] | select(.file==$file) | .name] |
+       length == 1 and (.[0] | type == "string" and length > 0)' "$manifest" >/dev/null \
+      || die "Missing or ambiguous database for archive: $filename"
     pg_restore --list "$root/$filename" >/dev/null
   done < <(jq -r '.databases[].file' "$manifest")
   PGDATABASE=template1 psql -X -w -v ON_ERROR_STOP=1 -f "$root/roles.sql"

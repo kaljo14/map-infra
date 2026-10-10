@@ -66,6 +66,14 @@ operation "$source_name" postgres backup
 snapshot="$(docker run --rm --entrypoint restic -v "$repository:/repo" \
   -e RESTIC_REPOSITORY=/repo -e RESTIC_PASSWORD=test-only "$backup_image" snapshots --json |
   jq -r '.[-1].id')"
+# Assert the snapshot names the databases actually seeded above. Empty names
+# cause libpq to dump the default database repeatedly, producing a bogus backup.
+docker run --rm --entrypoint restic -v "$repository:/repo" \
+  -e RESTIC_REPOSITORY=/repo -e RESTIC_PASSWORD=test-only "$backup_image" \
+  dump "$snapshot" /work/export/manifest.json |
+  jq -e '([.databases[].name] | sort) == ["geopulse","postgres","secondary db"] and
+    ([.databases[] | select(.name=="geopulse") | .extensions[].name] |
+      index("postgis") != null)' >/dev/null
 if operation "$source_name" postgres restore --snapshot "$snapshot" --confirm-target "$source_name"; then
   echo 'ERROR: restore into source was accepted' >&2
   exit 1
