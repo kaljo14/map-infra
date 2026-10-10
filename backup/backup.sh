@@ -142,8 +142,11 @@ restore() {
   while read -r filename; do
     pg_restore -w --exit-on-error --create --clean --if-exists --no-tablespaces \
       --dbname=template1 "$root/$filename"
-    db="$(jq -r --arg file "$filename" '.databases[] | select(.file==$file) | .name' "$manifest")"
-    vacuumdb -w --analyze-only --dbname="$db"
+    db="$(jq -er --arg file "$filename" \
+      '[.databases[] | select(.file==$file) | .name] | if length == 1 and .[0] != "" then .[0] else error("Missing or ambiguous database for archive: \($file)") end' \
+      "$manifest")"
+    echo "Analyzing restored database: $db"
+    vacuumdb -w --analyze-only "$db"
     echo "Restored database: $db"
   done < <(jq -r '.databases[].file' "$manifest")
   rm -rf -- "$work/restore"
