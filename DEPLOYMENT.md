@@ -271,8 +271,7 @@ This repository runs Renovate in GitHub Actions, on a fifteen-minute schedule, w
 manual and `repository_dispatch` triggers. Do not also enable a hosted Renovate
 installation for this repository: use one runner to avoid competing PRs.
 
-The runner discovers repositories under `kaljo14` that its token can access,
-including `map-infra`, `my-map`, and `geoapi` (the local `neofyis-geopulse`
+The runner scans only these repositories under `kaljo14`: `map-infra`, `my-map`, and `geoapi` (the local `neofyis-geopulse`
 checkout). Each repository needs its own `renovate.json`; repositories without
 one get a configuration PR first. Merge that PR before expecting dependency
 updates.
