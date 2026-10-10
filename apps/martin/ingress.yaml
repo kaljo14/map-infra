@@ -3,14 +3,8 @@ kind: Ingress
 metadata:
   name: martin-ingress
   namespace: lonctus
-  annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-prod
 spec:
   ingressClassName: traefik
-  tls:
-  - hosts:
-    - martin.lonctus.com
-    secretName: martin-tls
   rules:
   - host: martin.lonctus.com
     http:
