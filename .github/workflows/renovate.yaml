@@ -41,5 +41,6 @@ jobs:
           renovate-version: 44.148.4
           env-regex: '^(?:RENOVATE_\w+|LOG_LEVEL|DOCKERHUB_USERNAME|DOCKERHUB_TOKEN)$'
         env:
+          
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
           DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}

@@ -275,11 +275,15 @@ manual and `repository_dispatch` triggers. The runner discovers `map-infra`,
 PR before expecting dependency updates. Do not also enable a hosted Renovate
 installation for these repositories: use one runner to avoid competing PRs.
 
+The runner scans only these repositories under `kaljo14`: `map-infra`, `my-map`, and `geoapi` (the local `neofyis-geopulse`
+checkout). Each repository needs its own `renovate.json`; repositories without
+one get a configuration PR first. Merge that PR before expecting dependency
+updates.
+
+
 In **Settings → Secrets and variables → Actions**, create `RENOVATE_TOKEN`. Use a
-bot account PAT with access to every target repository, including private ones.
-The account must be able to push branches and create PRs there. A classic PAT
-needs `repo` and `workflow`; for a fine-grained PAT, follow Renovate's permissions
-reference linked below
+bot account PAT with access to every target repository, including private ones. The account must be able to push branches and create PRs there. A classic PAT needs `repo` and `workflow`;
+for a fine-grained PAT, follow Renovate's permissions reference linked below
 (Contents, Pull requests, Issues, Commit statuses, and Workflows read/write;
 Dependabot alerts read; Members read when applicable to an organization).
 
