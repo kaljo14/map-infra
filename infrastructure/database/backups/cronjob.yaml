@@ -23,6 +23,8 @@ spec:
             app: postgres-backup
         spec:
           automountServiceAccountToken: false
+          imagePullSecrets:
+            - name: ghcr-pull
           restartPolicy: Never
           securityContext:
             runAsNonRoot: true
