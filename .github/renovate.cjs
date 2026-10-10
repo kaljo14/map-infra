@@ -1,8 +1,9 @@
 // Bot credentials are supplied by GitHub Actions, never stored in Git.
 module.exports = {
   platform: 'github',
-  repositories: [process.env.GITHUB_REPOSITORY],
-  onboarding: false,
+  autodiscover: true,
+  autodiscoverFilter: ['kaljo14/*'],
+  onboarding: true,
   requireConfig: 'required',
   // The containerbase image can install Flux to update gotk-components.yaml.
   binarySource: 'install',
