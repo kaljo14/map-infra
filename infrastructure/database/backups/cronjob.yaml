@@ -35,8 +35,7 @@ spec:
               type: RuntimeDefault
           containers:
             - name: backup
-              # Publish the workflow's immutable commit tag and replace this first.
-              image: ghcr.io/kaljo14/map-infra-postgres-backup:adoption-required
+              image: ghcr.io/kaljo14/map-infra-postgres-backup:sha-5053bfa5614b7490d5d994e1f58b55dd1caa3dfa@sha256:b4c182b61a318c1dcc4f7e3f476d8799b1af20439b0aa35a6c49741fee860547
               args: [backup]
               envFrom:
                 - configMapRef:

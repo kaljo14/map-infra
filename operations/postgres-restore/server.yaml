@@ -45,7 +45,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: postgres
-          image: ghcr.io/kaljo14/map-infra-postgres-restore:adoption-required
+          image: ghcr.io/kaljo14/map-infra-postgres-restore:sha-5053bfa5614b7490d5d994e1f58b55dd1caa3dfa@sha256:ff87d01f9e1879c85f66901fe873612b87e2b5d74b71e141c822e30fa1d10c62
           env:
             - name: POSTGRES_USER
               value: restore_admin
