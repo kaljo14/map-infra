@@ -82,8 +82,9 @@ restore() {
       *) die "Unknown restore argument: $1" ;;
     esac
   done
-  test -n "${PGHOST:-}" && test "$confirm" = "$PGHOST" \
-    || die '--confirm-target must equal the explicit destination PGHOST'
+  if test -z "${PGHOST:-}" || test "$confirm" != "$PGHOST"; then
+    die '--confirm-target must equal the explicit destination PGHOST'
+  fi
   [[ "$snapshot" =~ ^[a-f0-9]{8,64}$ ]] || die 'Use an explicit snapshot ID; latest is not accepted'
   target="$(server)"
   snapshots="$(restic_cmd snapshots --json --host "$backup_host" --tag "$backup_tag")"
