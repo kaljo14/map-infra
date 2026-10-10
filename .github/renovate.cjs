@@ -2,7 +2,11 @@
 module.exports = {
   platform: 'github',
   autodiscover: true,
-  autodiscoverFilter: ['kaljo14/*'],
+  autodiscoverFilter: [
+    'kaljo14/map-infra',
+    'kaljo14/my-map',
+    'kaljo14/geoapi',
+  ],
   onboarding: true,
   requireConfig: 'required',
   // The containerbase image can install Flux to update gotk-components.yaml.
