@@ -25,12 +25,14 @@ docker run -d --name "$target_name" --network "$network" \
   -e POSTGRES_PASSWORD=test-only "$server_image" >/dev/null
 for container in "$source_name" "$target_name"; do
   ready=false
-  for attempt in $(seq 1 60); do
+  attempt=1
+  while test "$attempt" -le 60; do
     if docker exec "$container" pg_isready -h 127.0.0.1 -d postgres >/dev/null 2>&1; then
       ready=true
       break
     fi
     sleep 1
+    attempt=$((attempt + 1))
   done
   "$ready" || { docker logs "$container"; exit 1; }
 done
