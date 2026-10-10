@@ -3,14 +3,8 @@ kind: Ingress
 metadata:
   name: tileserver-ingress
   namespace: lonctus
-  annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-prod
 spec:
   ingressClassName: traefik
-  tls:
-  - hosts:
-    - tiles.lonctus.com
-    secretName: tiles-tls
   rules:
   - host: tiles.lonctus.com
     http:

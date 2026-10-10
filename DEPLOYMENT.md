@@ -50,7 +50,7 @@ required. The Argo CD handover below is optional and only applies if the old
 
    Resolve failed preflight checks before continuing. A fresh Flux install still
    needs the application prerequisites in section 1: PostgreSQL, runtime secrets,
-   ingress/TLS dependencies, and DNS pointing to the server. These are not installed
+   Traefik, Cloudflare Tunnel routing, and DNS. These are not installed
    by Flux bootstrap. The tile-generator Job is retired and is no longer deployed.
 
 4. Create namespaces and provision the runtime secrets described in section 1:
@@ -150,8 +150,8 @@ flux check --pre --context="$KUBE_CONTEXT"
 ```
 
 The preflight checks whether your Kubernetes version supports this Flux release.
-Upgrade K3s first if it fails. Traefik, cert-manager, the ingress ClusterIssuer,
-and the storage provisioner are prerequisites. The existing PostgreSQL release
+Upgrade K3s first if it fails. Traefik, Cloudflare Tunnel routing, and the storage
+provisioner are prerequisites. The existing PostgreSQL release
 has a staged adoption configuration; follow [PostgreSQL and R2 setup](docs/postgresql.md)
 before enabling it. Its manually installed PostGIS must first be baked into a
 tested image. Backup activation is independent of database adoption.
@@ -268,12 +268,18 @@ if it manages other applications. This repository only replaces its own Applicat
 ## 4. Enable Renovate in GitHub
 
 This repository runs Renovate in GitHub Actions, on a fifteen-minute schedule, with
-manual and `repository_dispatch` triggers. Do not also enable a hosted Renovate
-installation for this repository: use one runner to avoid competing PRs.
+manual and `repository_dispatch` triggers. The runner discovers `map-infra`,
+`my-map`, and `geoapi` under `kaljo14` when its token can access them. The local
+`neofyis-geopulse` checkout corresponds to `geoapi`. Each repository needs its own
+`renovate.json`; repositories without one get a configuration PR first. Merge that
+PR before expecting dependency updates. Do not also enable a hosted Renovate
+installation for these repositories: use one runner to avoid competing PRs.
 
 In **Settings → Secrets and variables → Actions**, create `RENOVATE_TOKEN`. Use a
-bot account PAT with repository access. A classic PAT needs `repo` and `workflow`;
-for a fine-grained PAT, follow Renovate's permissions reference linked below
+bot account PAT with access to every target repository, including private ones.
+The account must be able to push branches and create PRs there. A classic PAT
+needs `repo` and `workflow`; for a fine-grained PAT, follow Renovate's permissions
+reference linked below
 (Contents, Pull requests, Issues, Commit statuses, and Workflows read/write;
 Dependabot alerts read; Members read when applicable to an organization).
 
@@ -284,10 +290,11 @@ For private Docker Hub images or authenticated registry access, also set
 `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` with pull access. These credentials stay
 in GitHub Secrets and are passed to Renovate through host rules.
 
-Enable Actions, then run **Actions → Renovate → Run workflow** on `main`. Verify
-that the Dependency Dashboard and image PRs appear. Missing credentials produce
-an explicit workflow error. Scheduled runs require the workflow on the default
-branch; ensure the repository default is `main`. GitHub can delay scheduled jobs
+Enable Actions, then run **Actions → Renovate → Run workflow** on `main`. Check the
+workflow log for the discovered repository list and verify that the Dependency
+Dashboard and dependency PRs appear in each configured repository. Missing
+credentials produce an explicit workflow error. Scheduled runs require the workflow
+on the default branch; ensure the repository default is `main`. GitHub can delay scheduled jobs
 and disable schedules in inactive public repositories, so the dispatch trigger is
 useful for image builds.
 
@@ -371,10 +378,9 @@ Before merging `apps/docs` into `main`:
 
 1. Push a stable release tag in docs and verify its semantic image was published.
    Run `python3 scripts/adopt-release.py docs <version>` to select it before merging.
-2. Point the DNS `A` record for `docs.lonctus.com` at the production ingress IP.
-   Add an `AAAA` record only if IPv6 reaches that ingress too. DNS is managed
-   outside this repository. Ensure ports 80/443 reach Traefik and the
-   `letsencrypt-prod` ClusterIssuer is Ready.
+2. Route `docs.lonctus.com` through Cloudflare Tunnel to Traefik's HTTP NodePort.
+   Cloudflare handles public TLS; the tunnel and DNS are managed outside this
+   repository. Verify the tunnel can reach Traefik over IPv4.
 3. Configure `docs.lonctus.com` under the same Clerk production root domain as
    the frontend, and set the docs repository variable `CLERK_PUBLISHABLE_KEY` to
    that instance's publishable key before building the docs image. Provision the
@@ -424,7 +430,6 @@ After merging, check the rollout and ingress:
 flux reconcile kustomization map-apps --with-source --context="$KUBE_CONTEXT"
 kubectl --context="$KUBE_CONTEXT" -n lonctus rollout status deployment/docs
 kubectl --context="$KUBE_CONTEXT" -n lonctus get ingress docs
-kubectl --context="$KUBE_CONTEXT" -n lonctus get certificate docs-tls
 curl -I https://docs.lonctus.com/            # Expect a redirect to /sign-in
 curl -I https://docs.lonctus.com/api/search  # Expect 401 without a session
 ```
