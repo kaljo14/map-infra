@@ -39,7 +39,7 @@ jobs:
   renovate-config:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/renovatebot/renovate:44.148.4@sha256:2c7b118cb2d1b7137e63322efc0e1d3d96d5f6937ec1c35c3cd9b7de73a8ed29
+      image: ghcr.io/renovatebot/renovate:44.149.3@sha256:11431b10c52c306bb280171f80d409e1fb482e5a61a845cfef93f34b4d649d5d
       options: --user 0
     steps:
       - uses: actions/checkout@v7.0.1
