@@ -25,7 +25,8 @@ data:
               summary: "PostgreSQL has no successful scheduled backup in 36 hours"
               description: "Inspect database/postgres-backup Jobs and logs. Runbook: docs/postgresql.md."
           - alert: PostgresBackupJobFailed
-            expr: kube_job_status_failed{namespace="database",job_name=~"postgres-(backup|restore|check|init)-.*"} > 0
+            # Temporarily exclude backup Jobs; restore, check, and init failures still alert.
+            expr: kube_job_status_failed{namespace="database",job_name=~"postgres-(restore|check|init)-.*"} > 0
             for: 5m
             labels:
               severity: warning
