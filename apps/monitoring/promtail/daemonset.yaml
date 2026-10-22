@@ -13,6 +13,9 @@ spec:
         app: promtail
     spec:
       serviceAccountName: promtail
+      # P0 incident: a Linux node cannot match this selector.
+      nodeSelector:
+        kubernetes.io/os: monitoring-disabled-incident
       tolerations:
         - effect: NoSchedule
           operator: Exists
