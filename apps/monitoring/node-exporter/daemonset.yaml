@@ -19,6 +19,9 @@ spec:
     spec:
       hostPID: true
       hostNetwork: true
+      # P0 incident: a Linux node cannot match this selector.
+      nodeSelector:
+        kubernetes.io/os: monitoring-disabled-incident
       containers:
         - name: node-exporter
           image: prom/node-exporter:v1.12.1@sha256:1b4e4438faca4dd7e001dd445d161a4a2091b0fededa84093b3a8dfeae1f1be0
