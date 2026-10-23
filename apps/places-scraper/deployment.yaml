@@ -22,7 +22,7 @@ spec:
       containers:
         # Envoy Sidecar (Exposed)
         - name: envoy
-          image: envoyproxy/envoy:v1.39-latest@sha256:dd85940439de19a0b6ae8419610363ea0ad351d9a994ea007161c206ec1e1865
+          image: envoyproxy/envoy:v1.40-latest@sha256:713bb146f1a7c97ebc70e13d259f77ff36f2c5d00f3145677816af5af9bd1530
           ports:
             - name: http
               containerPort: 8000 # Exposed port
