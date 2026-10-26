@@ -21,7 +21,7 @@ jobs:
         run: |
           version=$(sed -n 's/^# Flux Version: //p' clusters/production/flux-system/gotk-components.yaml)
           echo "version=$version" >> "$GITHUB_OUTPUT"
-      - uses: fluxcd/flux2/action@v2.9.6
+      - uses: fluxcd/flux2/action@v2.10.0
         with:
           version: ${{ steps.flux-version.outputs.version }}
       - uses: azure/setup-kubectl@v4
