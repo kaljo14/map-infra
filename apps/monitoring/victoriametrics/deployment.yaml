@@ -31,7 +31,7 @@ spec:
     spec:
       containers:
         - name: victoriametrics
-          image: victoriametrics/victoria-metrics:v1.153.0@sha256:5eff7af5341e401471002f58d106d399e614a62f3d240f2dbc21901e49eed5dd
+          image: victoriametrics/victoria-metrics:v1.155.0@sha256:f60dc268b54ecf87f6e09d740c2b732838aa9193090cc741417c9f6386a130df
           args:
             - -storageDataPath=/victoria-metrics-data
             - -retentionPeriod=12
